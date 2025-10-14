@@ -1,30 +1,44 @@
-# Backend (Node/Express)
+# Dependencies
 node_modules/
+
+# Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+<<<<<<< HEAD
 # allow lockfiles to be committed
 
 .env
 .env.*
 !.env.example
 
+=======
+>>>>>>> 00d87fe9601419376ffa620d0958a11741b532ab
 logs/
 *.log
 *.log.*
 
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Production/build files
 dist/
 build/
 
+# User-uploaded content
+uploads/
+
+# OS-generated files
 .DS_Store
+
+# Editor-specific files
 .idea/
 .vscode/
 *.swp
 
+# Test reports
 coverage/
 .nyc_output/
-
-uploads/
-
-
