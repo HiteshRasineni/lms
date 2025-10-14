@@ -25,43 +25,113 @@ export const useAuth = () => {
       }
       setLoading(false);
     };
-
     initAuth();
   }, []);
 
-  const login = async (email: string, password: string) => {
-    const response = await authApi.login({ email, password });
-    authStorage.setToken(response.token!);
-    authStorage.setUser(response);
-    setUser(response);
+  // Normal login
+  const login = async (email: string, password: string, selectedRole?: "student" | "teacher") => {
+    try {
+      const response = await authApi.login({ email, password });
+      authStorage.setToken(response.token!);
+      authStorage.setUser(response);
+      setUser(response);
 
-    toast({
-      title: "Login successful!",
-      description: `Welcome back, ${response.name}!`,
-    });
+      // Role mismatch handling
+      if (
+        (response.role === "Teacher" && selectedRole !== "teacher") ||
+        (response.role === "Student" && selectedRole !== "student")
+      ) {
+        toast({
+          title: "Role Mismatch",
+          description: `You logged in as ${response.role}, not ${selectedRole}.`,
+          variant: "destructive",
+        });
+        return null;
+      }
 
-    // ✅ Navigate based on role
-    if (response.role === "Teacher") {
-      navigate("/teacher/dashboard");
-    } else {
-      navigate("/student/dashboard");
+      toast({
+        title: "Login successful!",
+        description: `Welcome back, ${response.name}!`,
+      });
+
+      if (response.role === "Teacher") navigate("/teacher/dashboard");
+      else navigate("/student/dashboard");
+
+      return response;
+    } catch (error: any) {
+      toast({
+        title: "Login failed",
+        description: error?.message || "Invalid credentials",
+        variant: "destructive",
+      });
+      return null;
     }
-
-    return response;
   };
 
+  // Registration
   const register = async (name: string, email: string, password: string, role: "Student" | "Teacher") => {
-    const response = await authApi.register({ name, email, password, role });
+    try {
+      const response = await authApi.register({ name, email, password, role });
 
-    toast({
-      title: "Registration successful!",
-      description: "Please check your email to verify your account.",
-    });
+      toast({
+        title: "Registration successful!",
+        description: "Please check your email to verify your account.",
+      });
 
-    navigate("/verify/notice");
-    return response;
+      navigate("/verify/notice");
+      return response;
+    } catch (error: any) {
+      toast({
+        title: "Registration failed",
+        description: error?.message || "Please try again",
+        variant: "destructive",
+      });
+      return null;
+    }
   };
 
+  // Google OAuth callback
+  const handleGoogleCallback = async (token: string, selectedRole?: "student" | "teacher") => {
+    try {
+      const response = await authApi.handleGoogleCallback(token);
+      authStorage.setToken(response.token!);
+      authStorage.setUser(response);
+      setUser(response);
+
+      // Role mismatch handling
+      if (
+        (response.role === "Teacher" && selectedRole !== "teacher") ||
+        (response.role === "Student" && selectedRole !== "student")
+      ) {
+        toast({
+          title: "Role Mismatch",
+          description: `You logged in as ${response.role}, not ${selectedRole}.`,
+          variant: "destructive",
+        });
+        navigate("/", { replace: true });
+        return null;
+      }
+
+      toast({
+        title: "Google Sign-In successful!",
+        description: `Welcome, ${response.name}!`,
+      });
+
+      if (response.role === "Teacher") navigate("/teacher/dashboard");
+      else navigate("/student/dashboard");
+
+      return response;
+    } catch (error: any) {
+      toast({
+        title: "Google Sign-In failed",
+        description: error?.message || "Please try again",
+        variant: "destructive",
+      });
+      return null;
+    }
+  };
+
+  // Logout
   const logout = () => {
     authStorage.clear();
     setUser(null);
@@ -72,31 +142,9 @@ export const useAuth = () => {
     navigate("/");
   };
 
-  const handleGoogleAuth = () => {
-    authApi.googleLogin();
-  };
-
-  const handleGoogleCallback = async (token: string) => {
-    const response = await authApi.handleGoogleCallback(token);
-    authStorage.setToken(response.token!);
-    authStorage.setUser(response);
-    setUser(response);
-
-    toast({
-      title: "Google Sign-In successful!",
-      description: `Welcome, ${response.name}!`,
-    });
-
-    // ✅ Slight delay to allow React Router to stabilize
-    setTimeout(() => {
-      if (response.role === "Teacher") {
-        navigate("/teacher/dashboard");
-      } else {
-        navigate("/student/dashboard");
-      }
-    }, 200);
-
-    return response;
+  // Trigger Google OAuth redirect (for login/register buttons)
+  const handleGoogleAuth = (role?: "student" | "teacher") => {
+    window.location.href = `${import.meta.env.VITE_API_URL}/auth/google${role ? `?role=${role}` : ""}`;
   };
 
   return {

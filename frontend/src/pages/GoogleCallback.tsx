@@ -1,38 +1,36 @@
 import { useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 
 const GoogleCallback = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { handleGoogleCallback } = useAuth();
 
   useEffect(() => {
-    const handleCallback = async () => {
-      const token = searchParams.get("token");
+    const token = searchParams.get("token");
+    const selectedRole = searchParams.get("selectedRole") as "student" | "teacher";
 
-      if (token) {
-        try {
-          await handleGoogleCallback(token);
-        } catch (error) {
-          console.error("Google OAuth callback error:", error);
-          toast({
-            title: "Authentication failed",
-            description: "Error processing Google login.",
-            variant: "destructive",
-          });
-        }
-      } else {
-        toast({
-          title: "Authentication failed",
-          description: "No token received from Google.",
-          variant: "destructive",
-        });
+    if (!token || !selectedRole) {
+      toast({
+        title: "Authentication failed",
+        description: "Invalid callback data",
+        variant: "destructive",
+      });
+      navigate("/", { replace: true }); // ✅ redirect to root
+      return;
+    }
+
+    const processGoogleLogin = async () => {
+      const response = await handleGoogleCallback(token, selectedRole);
+      if (!response) {
+        navigate("/", { replace: true }); // ✅ stay at login root page
       }
     };
 
-    handleCallback();
-  }, [searchParams]);
+    processGoogleLogin();
+  }, [searchParams, navigate, handleGoogleCallback]);
 
   return (
     <div className="min-h-screen flex items-center justify-center">

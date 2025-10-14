@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { GraduationCap, ArrowLeft } from "lucide-react";
+import { GraduationCap, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { GoogleSignInButton } from "@/components/GoogleSignInButton";
 import { useAuth } from "@/hooks/useAuth";
@@ -31,6 +31,8 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 const Register = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { register: registerUser, handleGoogleAuth } = useAuth();
 
   const form = useForm<RegisterFormValues>({
@@ -46,18 +48,13 @@ const Register = () => {
 
   const onSubmit = async (data: RegisterFormValues) => {
     setIsLoading(true);
-    
     try {
       await registerUser(data.name, data.email, data.password, data.role);
     } catch (error) {
-      // Error is handled in the useAuth hook
+      // Handled in useAuth
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleGoogleSuccess = () => {
-    handleGoogleAuth();
   };
 
   return (
@@ -79,6 +76,7 @@ const Register = () => {
           <CardContent>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+
                 <FormField
                   control={form.control}
                   name="name"
@@ -107,29 +105,53 @@ const Register = () => {
                   )}
                 />
 
+                {/* Password Field */}
                 <FormField
                   control={form.control}
                   name="password"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="relative">
                       <FormLabel>Password</FormLabel>
                       <FormControl>
-                        <Input type="password" placeholder="••••••••" {...field} />
+                        <Input
+                          type={showPassword ? "text" : "password"}
+                          placeholder="••••••••"
+                          {...field}
+                        />
                       </FormControl>
+                      <button
+                        type="button"
+                        className="absolute right-3 top-10 text-muted-foreground"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
+                {/* Confirm Password Field */}
                 <FormField
                   control={form.control}
                   name="confirmPassword"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="relative">
                       <FormLabel>Confirm Password</FormLabel>
                       <FormControl>
-                        <Input type="password" placeholder="••••••••" {...field} />
+                        <Input
+                          type={showConfirmPassword ? "text" : "password"}
+                          placeholder="••••••••"
+                          {...field}
+                        />
                       </FormControl>
+                      <button
+                        type="button"
+                        className="absolute right-3 top-10 text-muted-foreground"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      >
+                        {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -158,7 +180,7 @@ const Register = () => {
                 />
 
                 <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Creating Account..." : "Register"}
+                  {isLoading ? "Signing up..." : "Sign Up"}
                 </Button>
               </form>
             </Form>
@@ -168,22 +190,20 @@ const Register = () => {
                 <span className="w-full border-t border-white/20" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-3 text-muted-foreground font-medium">Or</span>
+                <span className="bg-card px-3 text-muted-foreground font-medium">
+                  Or
+                </span>
               </div>
             </div>
 
-            <GoogleSignInButton 
-              onSuccess={handleGoogleSuccess} 
-              text="Sign up with Google" 
-            />
+            <GoogleSignInButton handleGoogleAuth={handleGoogleAuth} />
 
             <div className="mt-6 text-center text-sm text-muted-foreground">
               Already have an account?{" "}
-              <button 
-                onClick={() => navigate("/")}
-                className="text-primary hover:underline font-medium inline-flex items-center gap-1"
+              <button
+                onClick={() => navigate("/login")}
+                className="text-primary hover:underline font-medium"
               >
-                <ArrowLeft className="h-3 w-3" />
                 Sign in
               </button>
             </div>

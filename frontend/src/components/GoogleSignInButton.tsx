@@ -1,12 +1,11 @@
-import { toast } from "@/hooks/use-toast";
-
 interface GoogleSignInButtonProps {
   text?: string;
+  onSuccess: (token: string) => void;
 }
 
-export const GoogleSignInButton = ({ text = "Sign in with Google" }: GoogleSignInButtonProps) => {
+export const GoogleSignInButton = ({ text = "Sign in with Google", onSuccess }: GoogleSignInButtonProps) => {
   const handleClick = () => {
-    // Redirect user to backend OAuth route
+    // Redirect to backend Google OAuth route
     window.location.href = `${import.meta.env.VITE_API_URL}/auth/google`;
   };
 
