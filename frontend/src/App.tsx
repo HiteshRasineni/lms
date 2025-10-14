@@ -6,6 +6,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import GoogleCallback from "./pages/GoogleCallback";
+import VerifyEmail from "./pages/VerifyEmail";
+import VerifyNotice from "./pages/VerifyNotice";
 import StudentDashboard from "./pages/StudentDashboard";
 import TeacherDashboard from "./pages/TeacherDashboard";
 import CourseList from "./pages/CourseList";
@@ -26,7 +28,12 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/auth/google/callback" element={<GoogleCallback />} />
+          <Route path="/verify" element={<VerifyEmail />} />
+          <Route path="/verify/notice" element={<VerifyNotice />} />
+
+          {/* ✅ Google OAuth callback route */}
+          <Route path="/auth/callback" element={<GoogleCallback />} />
+
           <Route 
             path="/student/dashboard" 
             element={
@@ -75,7 +82,6 @@ const App = () => (
               </ProtectedRoute>
             } 
           />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

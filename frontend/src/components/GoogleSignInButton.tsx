@@ -1,26 +1,18 @@
-import { useGoogleLogin } from "@react-oauth/google";
 import { toast } from "@/hooks/use-toast";
 
 interface GoogleSignInButtonProps {
-  onSuccess: (response: any) => void;
   text?: string;
 }
 
-export const GoogleSignInButton = ({ onSuccess, text = "Sign in with Google" }: GoogleSignInButtonProps) => {
-  const login = useGoogleLogin({
-    onSuccess: onSuccess,
-    onError: () => {
-      toast({
-        title: "Google Sign-In failed",
-        description: "Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
+export const GoogleSignInButton = ({ text = "Sign in with Google" }: GoogleSignInButtonProps) => {
+  const handleClick = () => {
+    // Redirect user to backend OAuth route
+    window.location.href = `${import.meta.env.VITE_API_URL}/auth/google`;
+  };
 
   return (
     <button
-      onClick={() => login()}
+      onClick={handleClick}
       type="button"
       className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-lg font-medium text-white bg-gradient-to-r from-[#1F1F1F] to-[#2B2B2B] border border-white/10 hover:border-primary/50 hover:shadow-[0_0_20px_rgba(37,99,235,0.3)] transition-all duration-300 ease-out"
     >

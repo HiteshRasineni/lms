@@ -1,23 +1,26 @@
-import { useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
-import { toast } from '@/hooks/use-toast';
+import { useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "@/hooks/use-toast";
 
 const GoogleCallback = () => {
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
   const { handleGoogleCallback } = useAuth();
 
   useEffect(() => {
     const handleCallback = async () => {
-      const token = searchParams.get('token');
-      
+      const token = searchParams.get("token");
+
       if (token) {
         try {
           await handleGoogleCallback(token);
         } catch (error) {
-          console.error('Google OAuth callback error:', error);
-          navigate('/');
+          console.error("Google OAuth callback error:", error);
+          toast({
+            title: "Authentication failed",
+            description: "Error processing Google login.",
+            variant: "destructive",
+          });
         }
       } else {
         toast({
@@ -25,12 +28,11 @@ const GoogleCallback = () => {
           description: "No token received from Google.",
           variant: "destructive",
         });
-        navigate('/');
       }
     };
 
     handleCallback();
-  }, [searchParams, navigate, handleGoogleCallback]);
+  }, [searchParams]);
 
   return (
     <div className="min-h-screen flex items-center justify-center">

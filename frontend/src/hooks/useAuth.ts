@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { authApi, authStorage, User } from '@/lib/auth';
-import { toast } from '@/hooks/use-toast';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { authApi, authStorage, User } from "@/lib/auth";
+import { toast } from "@/hooks/use-toast";
 
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -12,15 +12,13 @@ export const useAuth = () => {
     const initAuth = async () => {
       const token = authStorage.getToken();
       const storedUser = authStorage.getUser();
-      
+
       if (token && storedUser) {
         try {
-          // Verify token with backend
           const userData = await authApi.getProfile();
           setUser(userData);
           authStorage.setUser(userData);
-        } catch (error) {
-          // Token is invalid, clear storage
+        } catch {
           authStorage.clear();
           setUser(null);
         }
@@ -32,89 +30,46 @@ export const useAuth = () => {
   }, []);
 
   const login = async (email: string, password: string) => {
-    try {
-      const response = await authApi.login({ email, password });
-      authStorage.setToken(response.token);
-      authStorage.setUser({
-        _id: response._id,
-        name: response.name,
-        email: response.email,
-        role: response.role,
-      });
-      setUser({
-        _id: response._id,
-        name: response.name,
-        email: response.email,
-        role: response.role,
-      });
-      
-      toast({
-        title: "Login successful!",
-        description: `Welcome back, ${response.name}!`,
-      });
+    const response = await authApi.login({ email, password });
+    authStorage.setToken(response.token!);
+    authStorage.setUser(response);
+    setUser(response);
 
-      // Navigate based on role
-      if (response.role === 'Teacher') {
-        navigate('/teacher/dashboard');
-      } else {
-        navigate('/student/dashboard');
-      }
-    } catch (error: any) {
-      toast({
-        title: "Login failed",
-        description: error.response?.data?.message || "Invalid credentials",
-        variant: "destructive",
-      });
-      throw error;
+    toast({
+      title: "Login successful!",
+      description: `Welcome back, ${response.name}!`,
+    });
+
+    // ✅ Navigate based on role
+    if (response.role === "Teacher") {
+      navigate("/teacher/dashboard");
+    } else {
+      navigate("/student/dashboard");
     }
+
+    return response;
   };
 
-  const register = async (name: string, email: string, password: string, role: 'Student' | 'Teacher') => {
-    try {
-      const response = await authApi.register({ name, email, password, role });
-      authStorage.setToken(response.token);
-      authStorage.setUser({
-        _id: response._id,
-        name: response.name,
-        email: response.email,
-        role: response.role,
-      });
-      setUser({
-        _id: response._id,
-        name: response.name,
-        email: response.email,
-        role: response.role,
-      });
-      
-      toast({
-        title: "Registration successful!",
-        description: `Welcome, ${response.name}!`,
-      });
+  const register = async (name: string, email: string, password: string, role: "Student" | "Teacher") => {
+    const response = await authApi.register({ name, email, password, role });
 
-      // Navigate based on role
-      if (response.role === 'Teacher') {
-        navigate('/teacher/dashboard');
-      } else {
-        navigate('/student/dashboard');
-      }
-    } catch (error: any) {
-      toast({
-        title: "Registration failed",
-        description: error.response?.data?.message || "Failed to create account",
-        variant: "destructive",
-      });
-      throw error;
-    }
+    toast({
+      title: "Registration successful!",
+      description: "Please check your email to verify your account.",
+    });
+
+    navigate("/verify/notice");
+    return response;
   };
 
   const logout = () => {
     authStorage.clear();
     setUser(null);
-    navigate('/');
     toast({
       title: "Logged out",
       description: "You have been logged out successfully.",
     });
+    navigate("/");
   };
 
   const handleGoogleAuth = () => {
@@ -122,41 +77,26 @@ export const useAuth = () => {
   };
 
   const handleGoogleCallback = async (token: string) => {
-    try {
-      const response = await authApi.handleGoogleCallback(token);
-      authStorage.setToken(response.token);
-      authStorage.setUser({
-        _id: response._id,
-        name: response.name,
-        email: response.email,
-        role: response.role,
-      });
-      setUser({
-        _id: response._id,
-        name: response.name,
-        email: response.email,
-        role: response.role,
-      });
-      
-      toast({
-        title: "Google Sign-In successful!",
-        description: `Welcome, ${response.name}!`,
-      });
+    const response = await authApi.handleGoogleCallback(token);
+    authStorage.setToken(response.token!);
+    authStorage.setUser(response);
+    setUser(response);
 
-      // Navigate based on role
-      if (response.role === 'Teacher') {
-        navigate('/teacher/dashboard');
+    toast({
+      title: "Google Sign-In successful!",
+      description: `Welcome, ${response.name}!`,
+    });
+
+    // ✅ Slight delay to allow React Router to stabilize
+    setTimeout(() => {
+      if (response.role === "Teacher") {
+        navigate("/teacher/dashboard");
       } else {
-        navigate('/student/dashboard');
+        navigate("/student/dashboard");
       }
-    } catch (error: any) {
-      toast({
-        title: "Google Sign-In failed",
-        description: error.response?.data?.message || "Failed to authenticate with Google",
-        variant: "destructive",
-      });
-      throw error;
-    }
+    }, 200);
+
+    return response;
   };
 
   return {

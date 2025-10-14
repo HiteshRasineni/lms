@@ -8,11 +8,12 @@ export interface User {
 }
 
 export interface AuthResponse {
-  _id: string;
-  name: string;
-  email: string;
-  role: 'Student' | 'Teacher';
-  token: string;
+  _id?: string;
+  name?: string;
+  email?: string;
+  role?: 'Student' | 'Teacher';
+  token?: string;
+  message?: string;
 }
 
 export interface LoginCredentials {
