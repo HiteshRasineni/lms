@@ -1,0 +1,41 @@
+version: "3.9"
+
+services:
+  # -------------------------------------
+  # Backend (Node.js)
+  # -------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: lms-backend
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    depends_on:
+      - ml-service
+    networks:
+      - lms-network
+    restart: always
+
+  # -------------------------------------
+  # ML Plagiarism Service (FastAPI)
+  # -------------------------------------
+  ml-service:
+    build:
+      context: ./ml-service
+      dockerfile: Dockerfile
+    container_name: ml-service
+    ports:
+      - "8000:8000"
+    networks:
+      - lms-network
+    restart: always
+
+# -------------------------------------
+# Shared network
+# -------------------------------------
+networks:
+  lms-network:
+    driver: bridge
