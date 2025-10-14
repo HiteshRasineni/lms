@@ -4,6 +4,8 @@ import {
   register,
   login,
   getProfile,
+  verifyEmail,
+  resendVerification,
 } from "../controllers/authController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
@@ -14,7 +16,10 @@ router.post("/register", register);
 router.post("/login", login);
 router.get("/profile", protect, getProfile);
 
-// 🔹 Google OAuth routes
+// Email verification
+router.get("/verify-email", verifyEmail);
+router.post("/verify-email/resend", resendVerification);
+// Google OAuth routes
 router.get(
   "/google",
   passport.authenticate("google", { scope: ["profile", "email"] })
@@ -25,7 +30,8 @@ router.get(
   passport.authenticate("google", { session: false }),
   (req, res) => {
     const token = req.user.token;
-    res.redirect(`http://localhost:5173/login?token=${token}`);
+    // Redirect to frontend route to handle the token
+    res.redirect(`http://localhost:5173/auth/callback?token=${token}`);
   }
 );
 

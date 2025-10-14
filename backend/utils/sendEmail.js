@@ -2,34 +2,44 @@
 import nodemailer from "nodemailer";
 
 /**
- * Sends an email using configured SMTP or service credentials.
- * Configure .env with:
- *  EMAIL_HOST=smtp.gmail.com
- *  EMAIL_PORT=587
- *  EMAIL_USER=youraddress@gmail.com
- *  EMAIL_PASS=yourpassword_or_app_specific_token
+ * Sends an email using Gmail SMTP.
+ * Ensure your .env contains:
+ * EMAIL_USER=yoursecondary@gmail.com
+ * EMAIL_PASS=16char_app_password
  */
 export const sendEmail = async (to, subject, html) => {
   try {
+    console.log("📬 Preparing to send email...");
+    console.log("Recipient:", to);
+    console.log("Subject:", subject);
+
     const transporter = nodemailer.createTransport({
-      host: process.env.EMAIL_HOST,
-      port: process.env.EMAIL_PORT || 587,
-      secure: false, // use TLS
+      service: "gmail",
       auth: {
         user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
+        pass: process.env.EMAIL_PASS, // 16-character Gmail App Password
       },
     });
 
     const mailOptions = {
-      from: `"LMS Notifications" <${process.env.EMAIL_USER}>`,
+      from: process.env.EMAIL_USER, // must match your Gmail exactly
       to,
       subject,
       html,
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log("📨 Email sent:", info.messageId);
+
+    console.log("📨 Email sent via Gmail SMTP");
+    console.log("Accepted recipients:", info.accepted);
+    console.log("Rejected recipients:", info.rejected);
+    console.log("Pending:", info.pending);
+    console.log("Message ID:", info.messageId);
+
+    if (info.rejected.length > 0) {
+      console.warn("⚠️ Some recipients were rejected:", info.rejected);
+    }
+
     return info;
   } catch (err) {
     console.error("❌ Error sending email:", err.message);

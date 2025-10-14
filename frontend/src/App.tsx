@@ -7,6 +7,8 @@ import LandingPage from "./pages/LandingPage"; // <-- 1. IMPORT the new landing 
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import GoogleCallback from "./pages/GoogleCallback";
+import VerifyEmail from "./pages/VerifyEmail";
+import VerifyNotice from "./pages/VerifyNotice";
 import StudentDashboard from "./pages/StudentDashboard";
 import TeacherDashboard from "./pages/TeacherDashboard";
 import CourseList from "./pages/CourseList";
@@ -79,7 +81,6 @@ const App = () => (
               </ProtectedRoute>
             }
           />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
