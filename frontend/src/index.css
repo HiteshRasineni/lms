@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here.
 All colors MUST be HSL.
 */
 
@@ -17,16 +17,16 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 10%;
 
-    --primary: 14 100% 60%;
+    --primary: 24 100% 64%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 95%;
-    --secondary-foreground: 0 0% 10%;
+    --secondary: 24 100% 64%;
+    --secondary-foreground: 0 0% 100%;
 
     --muted: 0 0% 95%;
     --muted-foreground: 0 0% 45%;
 
-    --accent: 24 95% 53%;
+    --accent: 24 100% 64%;
     --accent-foreground: 0 0% 100%;
 
     --success: 142 76% 36%;
@@ -40,7 +40,7 @@ All colors MUST be HSL.
 
     --border: 0 0% 90%;
     --input: 0 0% 90%;
-    --ring: 14 100% 60%;
+    --ring: 24 100% 64%;
 
     --radius: 0.75rem;
 
@@ -57,10 +57,14 @@ All colors MUST be HSL.
     --gradient-success: linear-gradient(135deg, hsl(142 76% 36%) 0%, hsl(158 64% 52%) 100%);
     --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.08);
     --shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.12);
+
+    /* ++ Added from Project A for the landing page ++ */
+    --hero-overlay: 0 0% 0% / 0.4;
+    --top-bar-bg: 0 0% 8%;
   }
 
   .dark {
-    --background: 0 0% 8%;
+    --background: 0 0% 0%;
     --foreground: 0 0% 95%;
 
     --card: 0 0% 12%;
@@ -69,16 +73,16 @@ All colors MUST be HSL.
     --popover: 0 0% 12%;
     --popover-foreground: 0 0% 95%;
 
-    --primary: 14 100% 60%;
+    --primary: 24 100% 64%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 18%;
-    --secondary-foreground: 0 0% 95%;
+    --secondary: 24 100% 64%;
+    --secondary-foreground: 0 0% 100%;
 
     --muted: 0 0% 18%;
     --muted-foreground: 0 0% 65%;
 
-    --accent: 24 95% 53%;
+    --accent: 24 100% 64%;
     --accent-foreground: 0 0% 100%;
 
     --success: 142 76% 36%;
@@ -92,7 +96,7 @@ All colors MUST be HSL.
 
     --border: 0 0% 20%;
     --input: 0 0% 20%;
-    --ring: 14 100% 60%;
+    --ring: 24 100% 64%;
 
     --sidebar-background: 0 0% 8%;
     --sidebar-foreground: 0 0% 95%;
@@ -102,6 +106,10 @@ All colors MUST be HSL.
     --sidebar-accent-foreground: 0 0% 95%;
     --sidebar-border: 0 0% 20%;
     --sidebar-ring: 14 100% 60%;
+
+    /* ++ Added from Project A for the landing page ++ */
+    --hero-overlay: 0 0% 0% / 0.4;
+    --top-bar-bg: 220 15% 15%;
   }
 }
 
@@ -111,39 +119,39 @@ All colors MUST be HSL.
     backdrop-filter: blur(120px) saturate(180%);
     -webkit-backdrop-filter: blur(120px) saturate(180%);
     border: 1px solid rgba(255, 255, 255, 0.18);
-    box-shadow: 
+    box-shadow:
       0 8px 32px 0 rgba(0, 0, 0, 0.37),
       inset 0 0 0 1px rgba(255, 255, 255, 0.05);
     transition: all 0.3s ease;
   }
-  
+
   .glass-card:hover {
     background: rgba(255, 255, 255, 0.025);
     backdrop-filter: blur(120px) saturate(200%);
     -webkit-backdrop-filter: blur(120px) saturate(200%);
     border: 1px solid rgba(255, 255, 255, 0.22);
-    box-shadow: 
+    box-shadow:
       0 12px 48px 0 rgba(0, 0, 0, 0.5),
       inset 0 0 0 1px rgba(255, 255, 255, 0.08);
   }
-  
+
   .glass-card-light {
     background: rgba(255, 255, 255, 0.01);
     backdrop-filter: blur(100px) saturate(180%);
     -webkit-backdrop-filter: blur(100px) saturate(180%);
     border: 1px solid rgba(255, 255, 255, 0.15);
-    box-shadow: 
+    box-shadow:
       0 4px 24px 0 rgba(0, 0, 0, 0.25),
       inset 0 0 0 1px rgba(255, 255, 255, 0.03);
     transition: all 0.3s ease;
   }
-  
+
   .glass-card-light:hover {
     background: rgba(255, 255, 255, 0.02);
     backdrop-filter: blur(100px) saturate(200%);
     -webkit-backdrop-filter: blur(100px) saturate(200%);
     border: 1px solid rgba(255, 255, 255, 0.18);
-    box-shadow: 
+    box-shadow:
       0 8px 32px 0 rgba(0, 0, 0, 0.35),
       inset 0 0 0 1px rgba(255, 255, 255, 0.05);
   }
