@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import LandingPage from "./pages/LandingPage"; // <-- 1. IMPORT the new landing page
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import GoogleCallback from "./pages/GoogleCallback";
@@ -24,56 +25,59 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Login />} />
+          <Route path="/" element={<LandingPage />} />{" "}
+          {/* <-- 2. SET the landing page as the main route */}
+          <Route path="/login" element={<Login />} />{" "}
+          {/* <-- 3. CREATE a new route for Login */}
           <Route path="/register" element={<Register />} />
           <Route path="/auth/google/callback" element={<GoogleCallback />} />
-          <Route 
-            path="/student/dashboard" 
+          <Route
+            path="/student/dashboard"
             element={
               <ProtectedRoute requiredRole="Student">
                 <StudentDashboard />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/teacher/dashboard" 
+          <Route
+            path="/teacher/dashboard"
             element={
               <ProtectedRoute requiredRole="Teacher">
                 <TeacherDashboard />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/courses" 
+          <Route
+            path="/courses"
             element={
               <ProtectedRoute>
                 <CourseList />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/assignments" 
+          <Route
+            path="/assignments"
             element={
               <ProtectedRoute>
                 <Assignments />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/grades" 
+          <Route
+            path="/grades"
             element={
               <ProtectedRoute>
                 <Grades />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/forum" 
+          <Route
+            path="/forum"
             element={
               <ProtectedRoute>
                 <Forum />
               </ProtectedRoute>
-            } 
+            }
           />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
