@@ -11,9 +11,7 @@ venv/
 *.pyo
 *.pyd
 
-.env
-.env.*
-!.env.example
+# allow env files (private repo)
 
 logs/
 *.log
