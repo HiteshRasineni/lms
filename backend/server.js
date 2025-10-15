@@ -10,6 +10,10 @@ import assignmentRoutes from "./routes/assignmentRoutes.js";
 import submissionRoutes from "./routes/submissionRoutes.js";
 import gradeRoutes from "./routes/gradeRoutes.js";
 import plagiarismRoutes from "./routes/plagiarismRoutes.js";
+import todoRoutes from "./routes/todoRoutes.js";
+import eventRoutes from "./routes/eventRoutes.js";
+import studySessionRoutes from "./routes/studySessionRoutes.js";
+import leaderboardRoutes from "./routes/leaderboardRoutes.js";
 import { errorHandler } from "./middleware/errorMiddleware.js";
 
 dotenv.config();
@@ -40,6 +44,10 @@ app.use("/api/assignments", assignmentRoutes);
 app.use("/api/submissions", submissionRoutes);
 app.use("/api/grades", gradeRoutes);
 app.use("/api/plagiarism", plagiarismRoutes);
+app.use("/api/todos", todoRoutes);
+app.use("/api/events", eventRoutes);
+app.use("/api/study-sessions", studySessionRoutes);
+app.use("/api/leaderboard", leaderboardRoutes);
 
 // Error handler
 app.use(errorHandler);

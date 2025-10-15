@@ -98,3 +98,11 @@ export const authStorage = {
     return !!authStorage.getToken();
   },
 };
+
+// Export individual functions for convenience
+export const getToken = authStorage.getToken;
+export const setToken = authStorage.setToken;
+export const getUser = authStorage.getUser;
+export const setUser = authStorage.setUser;
+export const clearAuth = authStorage.clear;
+export const isAuthenticated = authStorage.isAuthenticated;

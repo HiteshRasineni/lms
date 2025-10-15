@@ -1,6 +1,7 @@
 import Grade from "../models/Grade.js";
 import Submission from "../models/Submission.js";
 import Assignment from "../models/Assignment.js";
+import User from "../models/User.js";
 
 export const gradeSubmission = async (req, res, next) => {
   try {
@@ -20,6 +21,11 @@ export const gradeSubmission = async (req, res, next) => {
       grade,
       feedback,
     });
+    // Award XP for completing assignment (50 XP)
+    await User.findByIdAndUpdate(submission.student, {
+      $inc: { xp: 50 }
+    });
+
     res.status(201).json(created);
   } catch (err) {
     next(err);
