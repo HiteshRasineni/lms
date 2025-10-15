@@ -1,35 +1,72 @@
+import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, BookOpen, FileText, CheckCircle, Plus } from "lucide-react";
+import { Users, BookOpen, FileText, CheckCircle, Plus, Loader2 } from "lucide-react";
+import { CreateCourseModal } from "@/components/teacher/CreateCourseModal";
+import { ManageCourseModal } from "@/components/teacher/ManageCourseModal";
+import { getTeacherCourses } from "@/lib/apiService";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "@/hooks/use-toast";
 
 const TeacherDashboard = () => {
-  const myCourses = [
-    { id: 1, name: "Introduction to Computer Science", students: 45, assignments: 8, nextClass: "Mon 10:00 AM" },
-    { id: 2, name: "Advanced Web Development", students: 32, assignments: 6, nextClass: "Wed 2:00 PM" },
-  ];
+  const { user } = useAuth();
+  const [myCourses, setMyCourses] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [manageCourse, setManageCourse] = useState<{ id: string; name: string } | null>(null);
+  const [stats, setStats] = useState({
+    activeCourses: 0,
+    totalStudents: 0,
+    pendingGrading: 0,
+    gradedThisWeek: 0,
+  });
 
-  const pendingGrading = [
-    { id: 1, assignment: "Final Project", course: "Computer Science", submissions: 12, total: 45 },
-    { id: 2, assignment: "React Assignment", course: "Web Development", submissions: 8, total: 32 },
-  ];
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
 
-  const recentActivity = [
-    { id: 1, student: "John Doe", action: "submitted", assignment: "Algorithm Project", time: "2 hours ago" },
-    { id: 2, student: "Jane Smith", action: "submitted", assignment: "React Component", time: "4 hours ago" },
-    { id: 3, student: "Mike Johnson", action: "asked question in", assignment: "Forum Discussion", time: "1 day ago" },
-  ];
+  const loadDashboardData = async () => {
+    try {
+      setLoading(true);
+      const coursesData = await getTeacherCourses();
+      setMyCourses(coursesData);
+
+      // Calculate stats
+      const totalStudents = coursesData.reduce((sum: number, course: any) => {
+        return sum + (course.enrolledCount || 0);
+      }, 0);
+
+      setStats({
+        activeCourses: coursesData.filter((c: any) => c.isPublished).length,
+        totalStudents,
+        pendingGrading: 0, // Would need assignment/submission data
+        gradedThisWeek: 0,
+      });
+    } catch (error: any) {
+      console.error("Failed to load dashboard data:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load some dashboard data",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <DashboardLayout userRole="teacher">
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">Teacher Dashboard</h1>
+            <h1 className="text-3xl font-bold text-foreground mb-2" data-testid="teacher-dashboard-title">
+              Welcome back, {user?.name || "Teacher"}! 👨‍🏫
+            </h1>
             <p className="text-muted-foreground">Manage your courses and student progress.</p>
           </div>
-          <Button className="gap-2">
+          <Button className="gap-2" onClick={() => setShowCreateModal(true)} data-testid="create-course-btn">
             <Plus className="h-4 w-4" />
             Create New Course
           </Button>
@@ -37,148 +74,135 @@ const TeacherDashboard = () => {
 
         {/* Stats Overview */}
         <div className="grid gap-4 md:grid-cols-4">
-          <Card>
+          <Card className="stat-card-orange border-white/10">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Active Courses</CardTitle>
-              <BookOpen className="h-4 w-4 text-muted-foreground" />
+              <BookOpen className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">2</div>
+              <div className="text-2xl font-bold" data-testid="active-courses-count">
+                {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : stats.activeCourses}
+              </div>
               <p className="text-xs text-muted-foreground">This semester</p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="stat-card-orange border-white/10">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Total Students</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
+              <Users className="h-4 w-4 text-accent" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">77</div>
+              <div className="text-2xl font-bold" data-testid="total-students-count">
+                {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : stats.totalStudents}
+              </div>
               <p className="text-xs text-muted-foreground">Across all courses</p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="stat-card-orange border-white/10">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Pending Grading</CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
+              <FileText className="h-4 w-4 text-muted-warning" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">20</div>
+              <div className="text-2xl font-bold" data-testid="pending-grading-count">
+                {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : stats.pendingGrading}
+              </div>
               <p className="text-xs text-warning">Needs attention</p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="stat-card-orange border-white/10">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Graded This Week</CardTitle>
-              <CheckCircle className="h-4 w-4 text-muted-foreground" />
+              <CheckCircle className="h-4 w-4 text-success" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">34</div>
+              <div className="text-2xl font-bold" data-testid="graded-week-count">
+                {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : stats.gradedThisWeek}
+              </div>
               <p className="text-xs text-success">Completed</p>
             </CardContent>
           </Card>
         </div>
 
         {/* My Courses */}
-        <Card>
+        <Card className="glass-card border-white/10">
           <CardHeader>
             <CardTitle>My Courses</CardTitle>
             <CardDescription>Courses you're currently teaching</CardDescription>
           </CardHeader>
           <CardContent>
+            {loading ? (
+              <div className="flex items-center justify-center p-8">
+                <Loader2 className="h-8 w-8 animate-spin" />
+              </div>
+            ) : myCourses.length === 0 ? (
+              <div className="text-center p-8 text-muted-foreground">
+                <BookOpen className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                <p>No courses yet. Click \"Create New Course\" to get started.</p>
+              </div>
+            ) : (
             <div className="space-y-4">
               {myCourses.map((course) => (
-                <div key={course.id} className="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
+                <div 
+                  key={course._id} 
+                  className="glass-card-orange border-white/5 rounded-lg p-4"
+                  data-testid={`course-item-${course._id}`}
+                >
                   <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <h3 className="font-semibold text-foreground">{course.name}</h3>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-foreground">{course.title}</h3>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {course.description || "No description"}
+                      </p>
                       <div className="flex gap-4 mt-2 text-sm text-muted-foreground">
                         <span className="flex items-center gap-1">
                           <Users className="h-3 w-3" />
-                          {course.students} students
+                          {course.enrolledCount || 0} students
                         </span>
-                        <span className="flex items-center gap-1">
-                          <FileText className="h-3 w-3" />
-                          {course.assignments} assignments
-                        </span>
-                      </div>
-                    </div>
-                    <Badge variant="outline">{course.nextClass}</Badge>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button size="sm" variant="outline">View Course</Button>
-                    <Button size="sm" variant="outline">Manage Content</Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        <div className="grid gap-6 md:grid-cols-2">
-          {/* Pending Grading */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Pending Grading</CardTitle>
-              <CardDescription>Assignments waiting for review</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {pendingGrading.map((item) => (
-                  <div key={item.id} className="flex items-start justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-                    <div className="space-y-1 flex-1">
-                      <h4 className="font-medium text-sm">{item.assignment}</h4>
-                      <p className="text-xs text-muted-foreground">{item.course}</p>
-                      <div className="flex items-center gap-2 mt-2">
-                        <div className="flex-1 bg-muted rounded-full h-2">
-                          <div 
-                            className="bg-primary h-2 rounded-full" 
-                            style={{ width: `${(item.submissions / item.total) * 100}%` }}
-                          />
+                          <span>{course.duration || "N/A"}</span>
+                          <span>{course.level || "Beginner"}</span>
                         </div>
-                        <span className="text-xs text-muted-foreground">
-                          {item.submissions}/{item.total}
-                        </span>
                       </div>
+                      <Badge variant={course.isPublished ? "default" : "outline"}>
+                        {course.isPublished ? "Published" : "Draft"}
+                      </Badge>
                     </div>
-                    <Button size="sm" className="ml-4">Grade</Button>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Recent Activity */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Activity</CardTitle>
-              <CardDescription>Latest student interactions</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {recentActivity.map((activity) => (
-                  <div key={activity.id} className="flex items-start gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <Users className="h-4 w-4 text-primary" />
-                    </div>
-                    <div className="flex-1 space-y-1">
-                      <p className="text-sm">
-                        <span className="font-medium">{activity.student}</span>{" "}
-                        <span className="text-muted-foreground">{activity.action}</span>{" "}
-                        <span className="font-medium">{activity.assignment}</span>
-                      </p>
-                      <p className="text-xs text-muted-foreground">{activity.time}</p>
+                    <div className="flex gap-2">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => setManageCourse({ id: course._id, name: course.title })}
+                        data-testid={`manage-course-btn-${course._id}`}
+                      >
+                        Manage Course
+                      </Button>
+                      <Button size="sm" variant="outline">View Analytics</Button>                    
                     </div>
                   </div>
                 ))}
               </div>
+            )}
             </CardContent>
           </Card>
-        </div>
       </div>
+      {/* Modals */}
+      <CreateCourseModal
+        open={showCreateModal}
+        onOpenChange={setShowCreateModal}
+        onCourseCreated={loadDashboardData}
+      />
+
+      {manageCourse && (
+        <ManageCourseModal
+          open={true}
+          onOpenChange={(open) => !open && setManageCourse(null)}
+          courseId={manageCourse.id}
+          courseName={manageCourse.name}
+        />
+      )}
     </DashboardLayout>
   );
 };

@@ -14,6 +14,8 @@ import todoRoutes from "./routes/todoRoutes.js";
 import eventRoutes from "./routes/eventRoutes.js";
 import studySessionRoutes from "./routes/studySessionRoutes.js";
 import leaderboardRoutes from "./routes/leaderboardRoutes.js";
+import announcementRoutes from "./routes/announcementRoutes.js";
+import forumRoutes from "./routes/forumRoutes.js";
 import { errorHandler } from "./middleware/errorMiddleware.js";
 
 dotenv.config();
@@ -48,6 +50,8 @@ app.use("/api/todos", todoRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/study-sessions", studySessionRoutes);
 app.use("/api/leaderboard", leaderboardRoutes);
+app.use("/api/announcements", announcementRoutes);
+app.use("/api/forum", forumRoutes);
 
 // Error handler
 app.use(errorHandler);

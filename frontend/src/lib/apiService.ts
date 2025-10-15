@@ -138,8 +138,19 @@ export const getMyRank = async () => {
 // ====================
 // COURSES
 // ====================
-export const getCourses = async () => {
-  const response = await apiClient.get("/courses");
+export const getCourses = async (filters?: { search?: string; category?: string; level?: string; published?: boolean }) => {
+  const params = new URLSearchParams();
+  if (filters?.search) params.append('search', filters.search);
+  if (filters?.category) params.append('category', filters.category);
+  if (filters?.level) params.append('level', filters.level);
+  if (filters?.published !== undefined) params.append('published', filters.published.toString());
+    
+  const response = await apiClient.get(`/courses?${params.toString()}`);
+  return response.data;
+};
+  
+export const getTeacherCourses = async () => {
+  const response = await apiClient.get("/courses/my-courses");
   return response.data;
 };
 
@@ -147,7 +158,137 @@ export const getEnrolledCourses = async () => {
   const response = await apiClient.get("/courses/enrolled");
   return response.data;
 };
-
+export const getCourseById = async (id: string) => {
+  const response = await apiClient.get(`/courses/${id}`);
+  return response.data;
+};
+  
+export const createCourse = async (formData: FormData) => {
+  const response = await apiClient.post("/courses", formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return response.data;
+};
+  
+export const updateCourse = async (id: string, formData: FormData) => {
+  const response = await apiClient.put(`/courses/${id}`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return response.data;
+};
+  
+export const deleteCourse = async (id: string) => {
+  const response = await apiClient.delete(`/courses/${id}`);
+  return response.data;
+};
+  
+export const enrollInCourse = async (courseId: string) => {
+  const response = await apiClient.post(`/courses/${courseId}/enroll`);
+  return response.data;
+};
+  
+export const unenrollFromCourse = async (courseId: string) => {
+  const response = await apiClient.delete(`/courses/${courseId}/unenroll`);
+  return response.data;
+};
+  
+export const getCourseStudents = async (courseId: string) => {
+  const response = await apiClient.get(`/courses/${courseId}/students`);
+  return response.data;
+};
+  
+  // ====================
+  // COURSE UNITS & TOPICS
+  // ====================
+export const getCourseUnits = async (courseId: string) => {
+  const response = await apiClient.get(`/courses/${courseId}/units`);
+  return response.data;
+};
+  
+export const createUnit = async (courseId: string, data: { title: string; description?: string; order?: number }) => {
+  const response = await apiClient.post(`/courses/${courseId}/units`, data);
+  return response.data;
+};
+  
+export const updateUnit = async (unitId: string, data: { title?: string; description?: string; order?: number }) => {
+  const response = await apiClient.put(`/courses/units/${unitId}`, data);
+  return response.data;
+};
+  
+export const deleteUnit = async (unitId: string) => {
+  const response = await apiClient.delete(`/courses/units/${unitId}`);
+  return response.data;
+};
+  
+export const getUnitTopics = async (unitId: string) => {
+  const response = await apiClient.get(`/courses/units/${unitId}/topics`);
+  return response.data;
+};
+  
+export const createTopic = async (unitId: string, formData: FormData) => {
+  const response = await apiClient.post(`/courses/units/${unitId}/topics`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return response.data;
+};
+  
+export const updateTopic = async (topicId: string, formData: FormData) => {
+  const response = await apiClient.put(`/courses/topics/${topicId}`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return response.data;
+};
+  
+export const deleteTopic = async (topicId: string) => {
+  const response = await apiClient.delete(`/courses/topics/${topicId}`);
+  return response.data;
+};
+  
+  // ====================
+  // ANNOUNCEMENTS
+  // ====================
+export const getCourseAnnouncements = async (courseId: string) => {
+  const response = await apiClient.get(`/announcements/course/${courseId}`);
+  return response.data;
+};
+  
+export const createAnnouncement = async (courseId: string, data: { title: string; content: string }) => {
+  const response = await apiClient.post(`/announcements/course/${courseId}`, data);
+  return response.data;
+};
+  
+export const updateAnnouncement = async (id: string, data: { title?: string; content?: string }) => {
+  const response = await apiClient.put(`/announcements/${id}`, data);
+  return response.data;
+};
+  
+export const deleteAnnouncement = async (id: string) => {
+  const response = await apiClient.delete(`/announcements/${id}`);
+  return response.data;
+};
+  
+  // ====================
+  // FORUM
+  // ====================
+export const getForumPosts = async (courseId: string) => {
+  const response = await apiClient.get(`/forum/${courseId}`);
+  return response.data;
+};
+  
+export const createForumPost = async (courseId: string, data: { title: string; content: string }) => {
+  const response = await apiClient.post(`/forum/${courseId}`, data);
+  return response.data;
+};
+  
+export const replyToPost = async (postId: string, content: string) => {
+  const response = await apiClient.post(`/forum/posts/${postId}/reply`, { content });
+  return response.data;
+};
+  
+export const deleteForumPost = async (postId: string) => {
+  const response = await apiClient.delete(`/forum/posts/${postId}`);
+  return response.data;
+};
 // ====================
 // ASSIGNMENTS
 // ====================
