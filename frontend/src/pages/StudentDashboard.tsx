@@ -34,7 +34,7 @@ const StudentDashboard = () => {
 
         {/* Stats Overview */}
         <div className="grid gap-4 md:grid-cols-4">
-          <Card className="glass-card border-white/10">
+          <Card className="stat-card-orange border-white/10">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Enrolled Courses</CardTitle>
               <BookOpen className="h-4 w-4 text-primary" />
@@ -45,7 +45,7 @@ const StudentDashboard = () => {
             </CardContent>
           </Card>
 
-          <Card className="glass-card border-white/10">
+          <Card className="stat-card-orange border-white/10">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Assignments Due</CardTitle>
               <FileText className="h-4 w-4 text-accent" />
@@ -56,7 +56,7 @@ const StudentDashboard = () => {
             </CardContent>
           </Card>
 
-          <Card className="glass-card border-white/10">
+          <Card className="stat-card-orange border-white/10">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Avg Grade</CardTitle>
               <TrendingUp className="h-4 w-4 text-success" />
@@ -67,7 +67,7 @@ const StudentDashboard = () => {
             </CardContent>
           </Card>
 
-          <Card className="glass-card border-white/10">
+          <Card className="stat-card-orange border-white/10">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Study Hours</CardTitle>
               <Clock className="h-4 w-4 text-warning" />
@@ -88,7 +88,7 @@ const StudentDashboard = () => {
           <CardContent>
             <div className="space-y-4">
               {enrolledCourses.map((course) => (
-                <div key={course.id} className="glass-card-light border-white/5 rounded-lg p-4 hover:bg-white/10 transition-all duration-300">
+                <div key={course.id} className="glass-card-orange border-white/5 rounded-lg p-4 cursor-pointer">
                   <div className="flex justify-between items-start mb-3">
                     <div>
                       <h3 className="font-semibold text-foreground">{course.name}</h3>
@@ -119,7 +119,7 @@ const StudentDashboard = () => {
             <CardContent>
               <div className="space-y-3">
                 {upcomingAssignments.map((assignment) => (
-                  <div key={assignment.id} className="glass-card-light border-white/5 rounded-lg p-3 hover:bg-white/10 transition-all duration-300">
+                  <div key={assignment.id} className="glass-card-orange border-white/5 rounded-lg p-3 cursor-pointer">
                     <div className="flex items-start justify-between">
                       <div className="space-y-1">
                         <h4 className="font-medium text-sm">{assignment.title}</h4>
@@ -145,7 +145,7 @@ const StudentDashboard = () => {
             <CardContent>
               <div className="space-y-3">
                 {recentGrades.map((grade) => (
-                  <div key={grade.id} className="glass-card-light border-white/5 rounded-lg p-3 hover:bg-white/10 transition-all duration-300">
+                  <div key={grade.id} className="glass-card-orange border-white/5 rounded-lg p-3 cursor-pointer">
                     <div className="flex items-start justify-between">
                       <div className="space-y-1">
                         <h4 className="font-medium text-sm">{grade.assignment}</h4>

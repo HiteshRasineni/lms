@@ -218,6 +218,53 @@ All colors MUST be HSL.
       0 8px 32px 0 rgba(0, 0, 0, 0.35),
       inset 0 0 0 1px rgba(255, 255, 255, 0.05);
   }
+
+  .glass-card-orange {
+    background: rgba(255, 255, 255, 0.01);
+    backdrop-filter: blur(100px) saturate(180%);
+    -webkit-backdrop-filter: blur(100px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 
+      0 4px 24px 0 rgba(0, 0, 0, 0.25),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .glass-card-orange:hover {
+    background: rgba(255, 120, 40, 0.15);
+    backdrop-filter: blur(120px) saturate(220%);
+    -webkit-backdrop-filter: blur(120px) saturate(220%);
+    border: 1px solid rgba(255, 120, 40, 0.4);
+    box-shadow: 
+      0 8px 32px 0 rgba(255, 100, 20, 0.3),
+      0 0 40px 0 rgba(255, 120, 40, 0.2),
+      inset 0 0 0 1px rgba(255, 140, 60, 0.15);
+    transform: translateY(-2px);
+  }
+
+  .stat-card-orange {
+    background: rgba(255, 255, 255, 0.015);
+    backdrop-filter: blur(120px) saturate(180%);
+    -webkit-backdrop-filter: blur(120px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 
+      0 8px 32px 0 rgba(0, 0, 0, 0.37),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+  }
+  
+  .stat-card-orange:hover {
+    background: rgba(255, 120, 40, 0.12);
+    backdrop-filter: blur(140px) saturate(220%);
+    -webkit-backdrop-filter: blur(140px) saturate(220%);
+    border: 1px solid rgba(255, 120, 40, 0.35);
+    box-shadow: 
+      0 12px 48px 0 rgba(255, 100, 20, 0.35),
+      0 0 50px 0 rgba(255, 120, 40, 0.25),
+      inset 0 0 0 1px rgba(255, 140, 60, 0.18);
+    transform: translateY(-4px) scale(1.02);
+  }
 }
 
 @layer base {

@@ -27,6 +27,13 @@ const userSchema = new mongoose.Schema({
   isVerified: { type: Boolean, default: false },
   verificationToken: { type: String, default: null },
   verificationExpires: { type: Date, default: null },
+  // Gamification
+  xp: { type: Number, default: 0 },
+  badges: [{ type: mongoose.Schema.Types.ObjectId, ref: "Badge" }],
+  
+  // Profile
+  bio: String,
+  avatar: String,
 }, { timestamps: true });
 
 // hash password before saving (skip if no password)
