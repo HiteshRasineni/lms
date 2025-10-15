@@ -64,9 +64,12 @@ export const useAuth = () => {
         description: error?.message || "Invalid credentials",
         variant: "destructive",
       });
+      // navigate("/login"); // ✅ REMOVED THIS LINE
       return null;
     }
   };
+
+  // ... (the rest of your useAuth.ts file is correct and doesn't need changes)
 
   // Registration
   const register = async (name: string, email: string, password: string, role: "Student" | "Teacher") => {

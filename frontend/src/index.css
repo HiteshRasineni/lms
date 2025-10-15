@@ -105,45 +105,116 @@ All colors MUST be HSL.
   }
 }
 
+@layer base {
+  /* Landing theme scoped variables */
+  .landing-theme {
+    --background: 0 0% 5%;
+    --foreground: 0 0% 95%;
+
+    --card: 0 0% 8%;
+    --card-foreground: 0 0% 95%;
+
+    --popover: 0 0% 8%;
+    --popover-foreground: 0 0% 95%;
+
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 24 100% 64%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 65%;
+
+    --accent: 24 100% 64%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 20%;
+    --input: 0 0% 12%;
+    --ring: 217 91% 60%;
+
+    --radius: 0.5rem;
+
+    --hero-overlay: 0 0% 0% / 0.5;
+    --top-bar-bg: 0 0% 8%;
+  }
+
+  .landing-theme.dark {
+    --background: 220 15% 10%;
+    --foreground: 0 0% 98%;
+
+    --card: 220 15% 15%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 220 15% 15%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 24 100% 64%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 220 15% 20%;
+    --muted-foreground: 220 9% 60%;
+
+    --accent: 24 100% 64%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 15% 25%;
+    --input: 220 15% 25%;
+    --ring: 217 91% 60%;
+
+    --hero-overlay: 0 0% 0% / 0.7;
+    --top-bar-bg: 220 15% 15%;
+  }
+}
+
 @layer utilities {
   .glass-card {
     background: rgba(255, 255, 255, 0.015);
     backdrop-filter: blur(120px) saturate(180%);
     -webkit-backdrop-filter: blur(120px) saturate(180%);
     border: 1px solid rgba(255, 255, 255, 0.18);
-    box-shadow: 
+    box-shadow:
       0 8px 32px 0 rgba(0, 0, 0, 0.37),
       inset 0 0 0 1px rgba(255, 255, 255, 0.05);
     transition: all 0.3s ease;
   }
-  
+
   .glass-card:hover {
     background: rgba(255, 255, 255, 0.025);
     backdrop-filter: blur(120px) saturate(200%);
     -webkit-backdrop-filter: blur(120px) saturate(200%);
     border: 1px solid rgba(255, 255, 255, 0.22);
-    box-shadow: 
+    box-shadow:
       0 12px 48px 0 rgba(0, 0, 0, 0.5),
       inset 0 0 0 1px rgba(255, 255, 255, 0.08);
   }
-  
+
   .glass-card-light {
     background: rgba(255, 255, 255, 0.01);
     backdrop-filter: blur(100px) saturate(180%);
     -webkit-backdrop-filter: blur(100px) saturate(180%);
     border: 1px solid rgba(255, 255, 255, 0.15);
-    box-shadow: 
+    box-shadow:
       0 4px 24px 0 rgba(0, 0, 0, 0.25),
       inset 0 0 0 1px rgba(255, 255, 255, 0.03);
     transition: all 0.3s ease;
   }
-  
+
   .glass-card-light:hover {
     background: rgba(255, 255, 255, 0.02);
     backdrop-filter: blur(100px) saturate(200%);
     -webkit-backdrop-filter: blur(100px) saturate(200%);
     border: 1px solid rgba(255, 255, 255, 0.18);
-    box-shadow: 
+    box-shadow:
       0 8px 32px 0 rgba(0, 0, 0, 0.35),
       inset 0 0 0 1px rgba(255, 255, 255, 0.05);
   }

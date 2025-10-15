@@ -10,7 +10,9 @@ const GoogleCallback = () => {
 
   useEffect(() => {
     const token = searchParams.get("token");
-    const selectedRole = searchParams.get("selectedRole") as "student" | "teacher";
+    const selectedRole = searchParams.get("selectedRole") as
+      | "student"
+      | "teacher";
 
     if (!token || !selectedRole) {
       toast({
@@ -18,14 +20,14 @@ const GoogleCallback = () => {
         description: "Invalid callback data",
         variant: "destructive",
       });
-      navigate("/", { replace: true }); // ✅ redirect to root
+      navigate("/login", { replace: true });
       return;
     }
 
     const processGoogleLogin = async () => {
       const response = await handleGoogleCallback(token, selectedRole);
       if (!response) {
-        navigate("/", { replace: true }); // ✅ stay at login root page
+        navigate("/login", { replace: true });
       }
     };
 
@@ -36,7 +38,9 @@ const GoogleCallback = () => {
     <div className="min-h-screen flex items-center justify-center">
       <div className="text-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
-        <p className="mt-4 text-muted-foreground">Completing Google Sign-In...</p>
+        <p className="mt-4 text-muted-foreground">
+          Completing Google Sign-In...
+        </p>
       </div>
     </div>
   );

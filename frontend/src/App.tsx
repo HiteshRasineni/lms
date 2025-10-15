@@ -3,6 +3,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+
+// --- Page Imports ---
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import GoogleCallback from "./pages/GoogleCallback";
@@ -15,6 +17,11 @@ import Assignments from "./pages/Assignments";
 import Grades from "./pages/Grades";
 import Forum from "./pages/Forum";
 import NotFound from "./pages/NotFound";
+import LandingIndex from "./pages/landing/LandingIndex";
+import AboutUs from "./pages/landing/AboutUs";
+
+// --- Layout & Protected Route Imports ---
+import LandingLayout from "./components/landing/LandingLayout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -26,62 +33,70 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Login />} />
+          {/* --- Landing Pages (Public) --- */}
+          <Route element={<LandingLayout />}>
+            <Route path="/" element={<LandingIndex />} />
+            <Route path="/about" element={<AboutUs />} />
+          </Route>
+
+          {/* --- Authentication Pages --- */}
+          <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/verify" element={<VerifyEmail />} />
           <Route path="/verify/notice" element={<VerifyNotice />} />
-
-          {/* ✅ Google OAuth callback route */}
           <Route path="/auth/callback" element={<GoogleCallback />} />
 
-          <Route 
-            path="/student/dashboard" 
+          {/* --- Protected Application Pages --- */}
+          <Route
+            path="/student/dashboard"
             element={
               <ProtectedRoute requiredRole="Student">
                 <StudentDashboard />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/teacher/dashboard" 
+          <Route
+            path="/teacher/dashboard"
             element={
               <ProtectedRoute requiredRole="Teacher">
                 <TeacherDashboard />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/courses" 
+          <Route
+            path="/courses"
             element={
               <ProtectedRoute>
                 <CourseList />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/assignments" 
+          <Route
+            path="/assignments"
             element={
               <ProtectedRoute>
                 <Assignments />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/grades" 
+          <Route
+            path="/grades"
             element={
               <ProtectedRoute>
                 <Grades />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/forum" 
+          <Route
+            path="/forum"
             element={
               <ProtectedRoute>
                 <Forum />
               </ProtectedRoute>
-            } 
+            }
           />
+
+          {/* --- Catch-All Not Found Route --- */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

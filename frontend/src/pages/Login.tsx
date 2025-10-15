@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,6 +24,15 @@ const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
 
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    const roleFromUrl = searchParams.get("role");
+    if (roleFromUrl === "teacher") {
+      setUserRole("teacher"); // ✅ CORRECTED: Was using the wrong function name
+    }
+  }, [searchParams]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -43,7 +52,8 @@ const Login = () => {
       if (!response) {
         toast({
           title: "Login failed",
-          description: "Invalid credentials or role mismatch. Please try again.",
+          description:
+            "Invalid credentials or role mismatch. Please try again.",
           variant: "destructive",
         });
       }
@@ -60,7 +70,9 @@ const Login = () => {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = `${import.meta.env.VITE_API_URL}/auth/google?role=${userRole}`;
+    window.location.href = `${
+      import.meta.env.VITE_API_URL
+    }/auth/google?role=${userRole}`;
   };
 
   return (
@@ -71,13 +83,17 @@ const Login = () => {
             <GraduationCap className="h-8 w-8 text-primary-foreground" />
           </div>
           <h1 className="text-4xl font-bold text-foreground mb-2">ElevateU</h1>
-          <p className="text-muted-foreground">Your Learning Management System</p>
+          <p className="text-muted-foreground">
+            Your Learning Management System
+          </p>
         </div>
 
         <Card>
           <CardHeader>
             <CardTitle>Welcome Back</CardTitle>
-            <CardDescription>Sign in to your account to continue</CardDescription>
+            <CardDescription>
+              Sign in to your account to continue
+            </CardDescription>
           </CardHeader>
 
           <CardContent>
@@ -111,7 +127,11 @@ const Login = () => {
                   className="absolute right-3 top-9 text-muted-foreground"
                   onClick={() => setShowPassword(!showPassword)}
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
                 </button>
               </div>
 

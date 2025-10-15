@@ -1,12 +1,20 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import api from "@/lib/api";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 const VerifyEmail = () => {
   const [searchParams] = useSearchParams();
-  const [status, setStatus] = useState<"pending" | "success" | "error">("pending");
+  const [status, setStatus] = useState<"pending" | "success" | "error">(
+    "pending"
+  );
   const [message, setMessage] = useState("Verifying your email...");
   const navigate = useNavigate();
 
@@ -16,10 +24,15 @@ const VerifyEmail = () => {
       try {
         const res = await api.get(`/auth/verify-email`, { params: { token } });
         setStatus("success");
-        setMessage(res.data?.message || "Email verified successfully. You can now log in.");
+        setMessage(
+          res.data?.message ||
+            "Email verified successfully. You can now log in."
+        );
       } catch (err: any) {
         setStatus("error");
-        setMessage(err.response?.data?.message || "Invalid or expired verification link.");
+        setMessage(
+          err.response?.data?.message || "Invalid or expired verification link."
+        );
       }
     };
     if (token) verify();
@@ -38,9 +51,15 @@ const VerifyEmail = () => {
             <CardDescription>Confirm your account</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className={`mb-6 ${status === "error" ? "text-red-400" : "text-muted-foreground"}`}>{message}</p>
+            <p
+              className={`mb-6 ${
+                status === "error" ? "text-red-400" : "text-muted-foreground"
+              }`}
+            >
+              {message}
+            </p>
             <div className="flex gap-3">
-              <Button onClick={() => navigate("/")}>Go to Login</Button>
+              <Button onClick={() => navigate("/login")}>Go to Login</Button>
             </div>
           </CardContent>
         </Card>
@@ -50,5 +69,3 @@ const VerifyEmail = () => {
 };
 
 export default VerifyEmail;
-
-
