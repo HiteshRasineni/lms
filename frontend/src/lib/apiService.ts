@@ -297,6 +297,45 @@ export const getAssignments = async () => {
   return response.data;
 };
 
+export const getCourseAssignments = async (courseId: string) => {
+  const response = await apiClient.get(`/assignments/course/${courseId}`);
+  return response.data;
+};
+
+export const createAssignment = async (data: any) => {
+  const response = await apiClient.post("/assignments", data);
+  return response.data;
+};
+
+export const updateAssignment = async (id: string, data: any) => {
+  const response = await apiClient.put(`/assignments/${id}`, data);
+  return response.data;
+};
+
+export const deleteAssignment = async (id: string) => {
+  const response = await apiClient.delete(`/assignments/${id}`);
+  return response.data;
+};
+
+// ====================
+// SUBMISSIONS
+// ====================
+export const submitAssignment = async (formData: FormData) => {
+  const response = await apiClient.post("/submissions", formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return response.data;
+};
+
+export const getMySubmissions = async () => {
+  const response = await apiClient.get("/submissions/my-submissions");
+  return response.data;
+};
+
+export const getSubmissionsByAssignment = async (assignmentId: string) => {
+  const response = await apiClient.get(`/submissions/assignment/${assignmentId}`);
+  return response.data;
+};
 // ====================
 // GRADES
 // ====================

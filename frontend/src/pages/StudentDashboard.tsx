@@ -13,9 +13,11 @@ import { useStudySessionTracker } from "@/hooks/useStudySessionTracker";
 import { getEnrolledCourses, getAssignments, getMyGrades, getMyRank } from "@/lib/apiService";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 const StudentDashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [enrolledCourses, setEnrolledCourses] = useState<any[]>([]);
   const [upcomingAssignments, setUpcomingAssignments] = useState<any[]>([]);
@@ -104,7 +106,11 @@ const StudentDashboard = () => {
 
         {/* Stats Overview */}
         <div className="grid gap-4 md:grid-cols-4">
-          <Card className="stat-card-orange border-white/10">
+          <Card 
+            className="stat-card-orange border-white/10 cursor-pointer hover:border-primary/50 transition-colors" 
+            onClick={() => navigate("/courses")}
+            data-testid="enrolled-courses-card"
+          >
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Enrolled Courses</CardTitle>
               <BookOpen className="h-4 w-4 text-primary" />
@@ -117,7 +123,11 @@ const StudentDashboard = () => {
             </CardContent>
           </Card>
 
-          <Card className="stat-card-orange border-white/10">
+          <Card 
+            className="stat-card-orange border-white/10 cursor-pointer hover:border-primary/50 transition-colors" 
+            onClick={() => navigate("/assignments")}
+            data-testid="assignments-due-card"
+          >
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Assignments Due</CardTitle>
               <FileText className="h-4 w-4 text-accent" />
@@ -130,7 +140,11 @@ const StudentDashboard = () => {
             </CardContent>
           </Card>
 
-          <Card className="stat-card-orange border-white/10">
+          <Card 
+            className="stat-card-orange border-white/10 cursor-pointer hover:border-primary/50 transition-colors" 
+            onClick={() => navigate("/grades")}
+            data-testid="avg-grade-card"
+          >
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Avg Grade</CardTitle>
               <TrendingUp className="h-4 w-4 text-success" />
@@ -143,7 +157,11 @@ const StudentDashboard = () => {
             </CardContent>
           </Card>
 
-          <Card className="stat-card-orange border-white/10">
+          <Card 
+            className="stat-card-orange border-white/10 cursor-pointer hover:border-primary/50 transition-colors" 
+            onClick={() => navigate("/calendar")}
+            data-testid="total-xp-card"
+          >
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Total XP</CardTitle>
               <Clock className="h-4 w-4 text-warning" />

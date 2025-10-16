@@ -166,12 +166,10 @@ export const getDailyTimetable = asyncHandler(async (req, res) => {
     res.status(400);
     throw new Error("Date parameter required");
   }
-
-  const targetDate = new Date(date);
-  const startOfDay = new Date(targetDate);
-  startOfDay.setHours(0, 0, 0, 0);
-  const endOfDay = new Date(targetDate);
-  endOfDay.setHours(23, 59, 59, 999);
+  // Parse date string properly to avoid timezone issues
+  const [year, month, day] = date.split('-').map(Number);
+  const startOfDay = new Date(year, month - 1, day, 0, 0, 0, 0);
+  const endOfDay = new Date(year, month - 1, day, 23, 59, 59, 999);
 
   // Get todos for this date
   const TodoItem = (await import("../models/TodoItem.js")).default;
@@ -201,7 +199,7 @@ export const getDailyTimetable = asyncHandler(async (req, res) => {
     .sort("dueDate");
 
   res.json({
-    date: targetDate,
+    date: startOfDay,
     todos,
     events,
     assignments,
