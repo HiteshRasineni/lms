@@ -3,57 +3,68 @@ import { CloudinaryStorage } from "multer-storage-cloudinary";
 import cloudinary from "../config/cloudinary.js";
 
 /**
- * Dynamically determine Cloudinary resource_type based on file mimetype.
- * Ensures PDFs, DOCX, ZIP, videos, etc. are uploaded as 'raw',
- * while images go under 'image'.
+ * Dynamically determine upload parameters for each file type.
+ * Ensures PDFs and DOCX are uploaded correctly and remain viewable/downloadable with proper MIME.
  */
-const getResourceType = (file) => {
-  if (file.mimetype.startsWith("image/")) return "image";
-  if (
-    file.mimetype.startsWith("video/") ||
-    file.mimetype === "application/pdf" ||
-    file.mimetype === "application/msword" ||
-    file.mimetype ===
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
-    file.mimetype === "application/zip" ||
-    file.mimetype === "text/plain"
-  ) {
-    return "raw";
+const getUploadParams = async (req, file, folder) => {
+  const mime = file.mimetype;
+
+  // === Images ===
+  if (mime.startsWith("image/")) {
+    return {
+      folder,
+      resource_type: "image",
+      allowed_formats: ["jpg", "jpeg", "png", "gif"],
+    };
   }
-  return "auto";
+
+  // === Videos ===
+  if (mime.startsWith("video/")) {
+    return {
+      folder,
+      resource_type: "video",
+      allowed_formats: ["mp4", "mov", "avi"],
+    };
+  }
+
+  // === Documents / PDFs ===
+  if (
+    mime === "application/pdf" ||
+    mime === "application/msword" ||
+    mime ===
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+    mime === "application/zip" ||
+    mime === "text/plain"
+  ) {
+    return {
+      folder,
+      resource_type: "auto", // ✅ Changed from "raw" to "auto" for accessibility
+      public_id: file.originalname.split(".")[0], // keep original name
+      format: file.originalname.split(".").pop(), // preserve extension
+      type: "upload",
+    };
+  }
+
+  // === Fallback ===
+  return {
+    folder,
+    resource_type: "auto",
+    type: "upload",
+  };
 };
 
 // === Course materials (PDFs, videos, images) ===
 const courseStorage = new CloudinaryStorage({
   cloudinary,
-  params: async (req, file) => ({
-    folder: "lms/course-materials",
-    resource_type: getResourceType(file),
-    allowed_formats: [
-      "jpg",
-      "jpeg",
-      "png",
-      "gif",
-      "pdf",
-      "mp4",
-      "mov",
-      "avi",
-      "doc",
-      "docx",
-      "zip",
-      "txt",
-    ],
-  }),
+  params: async (req, file) =>
+    getUploadParams(req, file, "lms/course-materials"),
 });
 
 // === Assignments ===
 const assignmentStorage = new CloudinaryStorage({
   cloudinary,
-  params: async (req, file) => ({
-    folder: "lms/assignments",
-    resource_type: getResourceType(file),
-    allowed_formats: ["pdf", "doc", "docx", "zip", "txt"],
-  }),
+  params: async (req, file) =>
+    getUploadParams(req, file, "lms/assignments"),
 });
 
 // === Thumbnails (always images) ===
@@ -76,7 +87,6 @@ const profileStorage = new CloudinaryStorage({
   },
 });
 
-// === Export ready-to-use uploaders ===
 export const uploadCourseMaterial = multer({ storage: courseStorage });
 export const uploadAssignment = multer({ storage: assignmentStorage });
 export const uploadThumbnail = multer({ storage: thumbnailStorage });

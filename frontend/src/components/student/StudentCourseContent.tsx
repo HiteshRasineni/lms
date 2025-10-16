@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { FileVideo, FileText, ListChecks, File, Play, CheckCircle } from "lucide-react";
@@ -97,7 +97,6 @@ export const StudentCourseContent = ({ courseId, units }: StudentCourseContentPr
         ))}
       </Accordion>
 
-      {/* Topic Viewer Dialog */}
       {selectedTopic && (
         <Dialog open={!!selectedTopic} onOpenChange={() => setSelectedTopic(null)}>
           <DialogContent className="max-w-4xl max-h-[90vh]" data-testid="topic-viewer">
@@ -123,13 +122,21 @@ export const StudentCourseContent = ({ courseId, units }: StudentCourseContentPr
                   {selectedTopic.type === "pdf" && (
                     <div className="space-y-2">
                       <iframe
-                        src={selectedTopic.contentUrl.replace('/upload/', '/upload/fl_attachment/')}
+                        src={selectedTopic.contentUrl}   // ✅ Fixed here
                         className="w-full h-[600px] rounded border"
                         data-testid="pdf-viewer"
-                       title="PDF Viewer"
+                        title="PDF Viewer"
                       />
                       <p className="text-xs text-muted-foreground text-center">
-                        If the PDF doesn't load, <a href={selectedTopic.contentUrl} target="_blank" rel="noopener noreferrer" className="text-primary underline">click here to open it in a new tab</a>.
+                        If the PDF doesn't load,{" "}
+                        <a
+                          href={selectedTopic.contentUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary underline"
+                        >
+                          click here to open it in a new tab
+                        </a>.
                       </p>
                     </div>
                   )}
