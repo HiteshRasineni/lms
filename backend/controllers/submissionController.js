@@ -41,9 +41,22 @@ export const submitAssignment = async (req, res, next) => {
       plagiarismChecked: false,
     });
 
-    // Optionally trigger plagiarism check for this assignment (async)
-    // Here we simply respond and let teacher trigger full check or we can call ML directly
     res.status(201).json(submission);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getMySubmissions = async (req, res, next) => {
+  try {
+    const submissions = await Submission.find({ student: req.user._id })
+      .populate("assignment")
+      .populate({
+        path: "assignment",
+        populate: { path: "course", select: "title" }
+      })
+      .sort({ createdAt: -1 });
+    res.json(submissions);
   } catch (err) {
     next(err);
   }

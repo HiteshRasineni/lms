@@ -1,4 +1,4 @@
-import { Home, BookOpen, FileText, GraduationCap, MessageSquare, BarChart3, Users, Calendar, Compass, Settings } from "lucide-react";
+import { Home, BookOpen, FileText, GraduationCap, MessageSquare, BarChart3, Calendar, Compass, Settings } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
   Sidebar,
@@ -26,7 +26,6 @@ const studentItems = [
 const teacherItems = [
   { title: "Dashboard", url: "/teacher/dashboard", icon: Home },
   { title: "My Courses", url: "/courses", icon: BookOpen },
-  { title: "Students", url: "/teacher/students", icon: Users },
   { title: "Assignments", url: "/teacher/assignments", icon: FileText },
   { title: "Grading", url: "/teacher/grading", icon: BarChart3 },
   { title: "Calendar", url: "/calendar", icon: Calendar },

@@ -109,7 +109,16 @@ export const getCourses = async (req, res, next) => {
     if (published !== undefined) query.isPublished = published === 'true';
 
     const courses = await Course.find(query).populate("teacher", "name email");
-    res.json(courses);
+    
+    // Add enrolledCount for each course
+    const coursesWithCount = await Promise.all(
+      courses.map(async (course) => {
+        const count = await Enrollment.countDocuments({ course: course._id });
+        return { ...course.toObject(), enrolledCount: count };
+      })
+    );
+    
+    res.json(coursesWithCount);
   } catch (err) {
     next(err);
   }
@@ -119,7 +128,16 @@ export const getCourses = async (req, res, next) => {
 export const getTeacherCourses = async (req, res, next) => {
   try {
     const courses = await Course.find({ teacher: req.user._id }).populate("teacher", "name email");
-    res.json(courses);
+    
+    // Add enrolledCount for each course
+    const coursesWithCount = await Promise.all(
+      courses.map(async (course) => {
+        const count = await Enrollment.countDocuments({ course: course._id });
+        return { ...course.toObject(), enrolledCount: count };
+      })
+    );
+    
+    res.json(coursesWithCount);
   } catch (err) {
     next(err);
   }
@@ -155,8 +173,11 @@ export const getCourseById = async (req, res, next) => {
         return { ...unit.toObject(), topics };
       })
     );
+    
+    // Add enrolledCount
+    const enrolledCount = await Enrollment.countDocuments({ course: req.params.id });
 
-    res.json({ ...course.toObject(), units: unitsWithTopics });
+    res.json({ ...course.toObject(), units: unitsWithTopics, enrolledCount });
   } catch (err) {
     next(err);
   }

@@ -33,7 +33,7 @@ const TeacherDashboard = () => {
       const coursesData = await getTeacherCourses();
       setMyCourses(coursesData);
 
-      // Calculate stats
+      // Calculate stats - enrolledCount is now returned from API
       const totalStudents = coursesData.reduce((sum: number, course: any) => {
         return sum + (course.enrolledCount || 0);
       }, 0);
@@ -141,7 +141,7 @@ const TeacherDashboard = () => {
             ) : myCourses.length === 0 ? (
               <div className="text-center p-8 text-muted-foreground">
                 <BookOpen className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                <p>No courses yet. Click \"Create New Course\" to get started.</p>
+                <p>No courses yet. Click "Create New Course" to get started.</p>
               </div>
             ) : (
             <div className="space-y-4">
@@ -181,8 +181,7 @@ const TeacherDashboard = () => {
                       </Button>                    
                     </div>
                   </div>
-                ))}
-              </div>
+                ))}              </div>
             )}
             </CardContent>
           </Card>

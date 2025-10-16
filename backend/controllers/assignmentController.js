@@ -1,12 +1,14 @@
 import Assignment from "../models/Assignment.js";
 import Course from "../models/Course.js";
+import Enrollment from "../models/Enrollment.js";
+import Submission from "../models/Submission.js";
 import asyncHandler from "express-async-handler";
 
 // ===============================
 // TEACHER: Create a new assignment
 // ===============================
 export const createAssignment = asyncHandler(async (req, res) => {
-  const { title, description, dueDate, courseId } = req.body;
+  const { title, description, dueDate, courseId, topicId, maxPoints, xpReward } = req.body;
 
   const course = await Course.findById(courseId);
   if (!course) {
@@ -14,12 +16,20 @@ export const createAssignment = asyncHandler(async (req, res) => {
     throw new Error("Course not found");
   }
 
+  // Verify teacher owns the course
+  if (course.teacher.toString() !== req.user._id.toString()) {
+    res.status(403);
+    throw new Error("Not authorized to create assignments for this course");
+  }
+
   const newAssignment = new Assignment({
     title,
     description,
     dueDate,
     course: courseId,
-    createdBy: req.user._id, // teacher id
+    topic: topicId || null,
+    maxPoints: maxPoints || 100,
+    xpReward: xpReward || 50,
   });
 
   await newAssignment.save();
@@ -30,41 +40,12 @@ export const createAssignment = asyncHandler(async (req, res) => {
 });
 
 // ===================================
-// STUDENT: Upload a submission (PDF)
-// ===================================
-export const uploadAssignment = asyncHandler(async (req, res) => {
-  const { courseId } = req.body;
-  const studentId = req.user._id;
-
-  const fileUrl = req.file?.path;
-  if (!fileUrl) {
-    res.status(400);
-    throw new Error("No file uploaded");
-  }
-
-  const submission = new Assignment({
-    course: courseId,
-    student: studentId,
-    fileUrl,
-    status: "submitted",
-    submittedAt: new Date(),
-  });
-
-  await submission.save();
-
-  res.status(201).json({
-    message: "Assignment uploaded successfully",
-    fileUrl,
-    assignment: submission,
-  });
-});
-
-// ===================================
 // BOTH: Get assignments for a course
 // ===================================
 export const getAssignmentsByCourse = asyncHandler(async (req, res) => {
   const assignments = await Assignment.find({ course: req.params.courseId })
-    .populate("createdBy", "name email role")
+    .populate("course", "title")
+    .populate("topic", "title")
     .sort({ createdAt: -1 });
   res.status(200).json(assignments);
 });
@@ -75,21 +56,99 @@ export const getAssignmentsByCourse = asyncHandler(async (req, res) => {
 export const getMyAssignments = asyncHandler(async (req, res) => {
   let assignments;
 
-  if (req.user.role === "teacher") {
-    // ✅ Teacher: Fetch assignments created by them
-    assignments = await Assignment.find({ createdBy: req.user._id })
-      .populate("course", "name code")
+  if (req.user.role === "Teacher") {
+    // Teacher: Fetch all courses they teach
+    const courses = await Course.find({ teacher: req.user._id }).select("_id");
+    const courseIds = courses.map(c => c._id);
+    
+    // Get all assignments for those courses
+    assignments = await Assignment.find({ course: { $in: courseIds } })
+      .populate("course", "title")
+      .populate("topic", "title")
       .sort({ createdAt: -1 });
-  } else if (req.user.role === "student") {
-    // ✅ Student: Fetch assignments for their enrolled courses
-    const enrolledCourses = await Course.find({ students: req.user._id }).select("_id");
-    assignments = await Assignment.find({ course: { $in: enrolledCourses } })
-      .populate("course", "name code")
+  } else if (req.user.role === "Student") {
+    // Student: Fetch enrolled courses
+    const enrollments = await Enrollment.find({ student: req.user._id }).select("course");
+    const courseIds = enrollments.map(e => e.course);
+    
+    // Get all assignments for enrolled courses
+    assignments = await Assignment.find({ course: { $in: courseIds } })
+      .populate("course", "title")
+      .populate("topic", "title")
       .sort({ dueDate: 1 });
+    
+    // Check if student has submitted each assignment
+    const assignmentsWithStatus = await Promise.all(
+      assignments.map(async (assignment) => {
+        const submission = await Submission.findOne({
+          assignment: assignment._id,
+          student: req.user._id
+        });
+        return {
+          ...assignment.toObject(),
+          submitted: !!submission,
+          submissionId: submission?._id
+        };
+      })
+    );
+    
+    assignments = assignmentsWithStatus;
   } else {
     res.status(403);
     throw new Error("Invalid user role");
   }
 
   res.status(200).json(assignments);
+});
+
+// ===================================
+// UPDATE assignment
+// ===================================
+export const updateAssignment = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { title, description, dueDate, maxPoints, xpReward } = req.body;
+
+  const assignment = await Assignment.findById(id).populate("course");
+  
+  if (!assignment) {
+    res.status(404);
+    throw new Error("Assignment not found");
+  }
+
+  // Verify teacher owns the course
+  if (assignment.course.teacher.toString() !== req.user._id.toString()) {
+    res.status(403);
+    throw new Error("Not authorized to update this assignment");
+  }
+
+  if (title) assignment.title = title;
+  if (description) assignment.description = description;
+  if (dueDate) assignment.dueDate = dueDate;
+  if (maxPoints) assignment.maxPoints = maxPoints;
+  if (xpReward) assignment.xpReward = xpReward;
+
+  await assignment.save();
+  res.json(assignment);
+});
+
+// ===================================
+// DELETE assignment
+// ===================================
+export const deleteAssignment = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const assignment = await Assignment.findById(id).populate("course");
+  
+  if (!assignment) {
+    res.status(404);
+    throw new Error("Assignment not found");
+  }
+
+  // Verify teacher owns the course
+  if (assignment.course.teacher.toString() !== req.user._id.toString()) {
+    res.status(403);
+    throw new Error("Not authorized to delete this assignment");
+  }
+
+  await assignment.deleteOne();
+  res.json({ message: "Assignment deleted successfully" });
 });

@@ -17,6 +17,8 @@ import ExploreCourses from "./pages/ExploreCourses";
 import StudentCourseDetail from "./pages/StudentCourseDetail";
 import TeacherCourseDetail from "./pages/TeacherCourseDetail";
 import Assignments from "./pages/Assignments";
+import TeacherAssignments from "./pages/TeacherAssignments";
+import TeacherGrading from "./pages/TeacherGrading";
 import Grades from "./pages/Grades";
 import Forum from "./pages/Forum";
 import Calendar from "./pages/Calendar";
@@ -103,8 +105,32 @@ const App = () => (
           <Route
             path="/assignments"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRole="Student">
                 <Assignments />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/teacher/assignments"
+            element={
+              <ProtectedRoute requiredRole="Teacher">
+                <TeacherAssignments />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/teacher/grading"
+            element={
+              <ProtectedRoute requiredRole="Teacher">
+                <TeacherGrading />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/student/courses/:courseId"
+            element={
+              <ProtectedRoute requiredRole="Student">
+                <StudentCourseDetail />
               </ProtectedRoute>
             }
           />

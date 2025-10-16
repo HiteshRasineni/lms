@@ -121,11 +121,17 @@ export const StudentCourseContent = ({ courseId, units }: StudentCourseContentPr
                     </video>
                   )}
                   {selectedTopic.type === "pdf" && (
-                    <iframe
-                      src={selectedTopic.contentUrl}
-                      className="w-full h-[600px] rounded"
-                      data-testid="pdf-viewer"
-                    />
+                    <div className="space-y-2">
+                      <iframe
+                        src={selectedTopic.contentUrl}
+                        className="w-full h-[600px] rounded border"
+                        data-testid="pdf-viewer"
+                       title="PDF Viewer"
+                      />
+                      <p className="text-xs text-muted-foreground text-center">
+                        If the PDF doesn't load, <a href={selectedTopic.contentUrl} target="_blank" rel="noopener noreferrer" className="text-primary underline">click here to open it in a new tab</a>.
+                      </p>
+                    </div>
                   )}
                   {(selectedTopic.type === "assignment" || selectedTopic.type === "quiz") && (
                     <div className="text-center p-8">

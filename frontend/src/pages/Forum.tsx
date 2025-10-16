@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -5,171 +6,252 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { MessageSquare, ThumbsUp, Plus, Search } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { MessageSquare, ThumbsUp, Plus, Search, Loader2 } from "lucide-react";
+import { getEnrolledCourses } from "@/lib/apiService";
+import apiClient from "@/lib/apiService";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "@/hooks/use-toast";
 
 const Forum = () => {
-  const discussions = [
-    {
-      id: 1,
-      title: "Need help with Binary Search Tree implementation",
-      author: "John Doe",
-      course: "Data Structures",
-      replies: 8,
-      likes: 12,
-      time: "2 hours ago",
-      tags: ["algorithms", "trees", "help-needed"],
-      preview: "I'm having trouble implementing the insert method for BST...",
-    },
-    {
-      id: 2,
-      title: "Best practices for React state management?",
-      author: "Jane Smith",
-      course: "Web Development",
-      replies: 15,
-      likes: 24,
-      time: "5 hours ago",
-      tags: ["react", "state", "best-practices"],
-      preview: "What's the best approach for managing complex state in React apps?",
-    },
-    {
-      id: 3,
-      title: "Understanding time complexity of sorting algorithms",
-      author: "Mike Johnson",
-      course: "Data Structures",
-      replies: 6,
-      likes: 18,
-      time: "1 day ago",
-      tags: ["algorithms", "complexity", "sorting"],
-      preview: "Can someone explain why quicksort is O(n log n) on average?",
-    },
-    {
-      id: 4,
-      title: "Study group for midterm exam",
-      author: "Sarah Williams",
-      course: "Computer Science",
-      replies: 12,
-      likes: 20,
-      time: "1 day ago",
-      tags: ["study-group", "exam", "collaboration"],
-      preview: "Looking for students to form a study group for the upcoming midterm.",
-    },
-  ];
+  const { user } = useAuth();
+  const [discussions, setDiscussions] = useState<any[]>([]);
+  const [courses, setCourses] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState<string>("");
+  const [newPost, setNewPost] = useState({
+    title: "",
+    content: "",
+  });
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      // Get enrolled courses for students
+      const enrolledData = await getEnrolledCourses();
+      setCourses(enrolledData);
+      
+      // Load forum posts for all enrolled courses
+      if (enrolledData.length > 0) {
+        const allPosts: any[] = [];
+        for (const enrollment of enrolledData) {
+          if (enrollment.course?._id) {
+            try {
+              const posts = await apiClient.get(`/forum/${enrollment.course._id}`);
+              allPosts.push(...posts.data.map((p: any) => ({ ...p, courseName: enrollment.course.title })));
+            } catch (error) {
+              console.error(`Failed to load posts for course ${enrollment.course._id}`, error);
+            }
+          }
+        }
+        setDiscussions(allPosts);
+      }
+    } catch (error) {
+      console.error("Failed to load forum data:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load forum discussions",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreatePost = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!selectedCourse) {
+      toast({
+        title: "Error",
+        description: "Please select a course",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!newPost.title || !newPost.content) {
+      toast({
+        title: "Error",
+        description: "Please fill in all fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      await apiClient.post(`/forum/${selectedCourse}`, newPost);
+      toast({
+        title: "Success",
+        description: "Discussion posted successfully",
+      });
+      setShowCreateModal(false);
+      setNewPost({ title: "", content: "" });
+      setSelectedCourse("");
+      loadData();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to create post",
+        variant: "destructive",
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
-    <DashboardLayout userRole="student">
+    <DashboardLayout userRole={user?.role === "Teacher" ? "teacher" : "student"}>
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold text-foreground mb-2">Course Forum</h1>
             <p className="text-muted-foreground">Discuss topics, ask questions, and collaborate with peers.</p>
           </div>
-          <Button className="gap-2">
+          <Button className="gap-2" onClick={() => setShowCreateModal(true)} data-testid="new-discussion-btn">
             <Plus className="h-4 w-4" />
             New Discussion
           </Button>
         </div>
 
-        {/* Search and Filters */}
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input 
-                  placeholder="Search discussions..." 
-                  className="pl-10"
-                />
-              </div>
-              <Button variant="outline">Filter by Course</Button>
-              <Button variant="outline">Sort by</Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Discussion List */}
-        <div className="space-y-4">
-          {discussions.map((discussion) => (
-            <Card key={discussion.id} className="hover:shadow-lg transition-shadow cursor-pointer">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Badge variant="outline">{discussion.course}</Badge>
-                      <span className="text-xs text-muted-foreground">{discussion.time}</span>
-                    </div>
-                    <CardTitle className="text-lg mb-2 hover:text-primary transition-colors">
-                      {discussion.title}
-                    </CardTitle>
-                    <CardDescription>{discussion.preview}</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2">
-                      <Avatar className="h-6 w-6">
-                        <AvatarFallback className="text-xs">
-                          {discussion.author.split(' ').map(n => n[0]).join('')}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="text-sm font-medium">{discussion.author}</span>
-                    </div>
-                    
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <MessageSquare className="h-4 w-4" />
-                        <span>{discussion.replies} replies</span>
+        {loading ? (
+          <div className="flex items-center justify-center p-12">
+            <Loader2 className="h-8 w-8 animate-spin" />
+          </div>
+        ) : discussions.length === 0 ? (
+          <Card>
+            <CardContent className="pt-12 pb-12 text-center">
+              <MessageSquare className="h-12 w-12 mx-auto mb-3 opacity-50" />
+              <h3 className="text-lg font-semibold mb-2">No Discussions Yet</h3>
+              <p className="text-muted-foreground">
+                Be the first to start a discussion! Click "New Discussion" to get started.
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-4">
+            {discussions.map((discussion) => (
+              <Card key={discussion._id} className="hover:shadow-lg transition-shadow" data-testid="discussion-card">
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Badge variant="outline">{discussion.courseName || "Course"}</Badge>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(discussion.createdAt).toLocaleDateString()}
+                        </span>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <ThumbsUp className="h-4 w-4" />
-                        <span>{discussion.likes}</span>
+                      <CardTitle className="text-lg mb-2 hover:text-primary transition-colors">
+                        {discussion.title}
+                      </CardTitle>
+                      <CardDescription>{discussion.content}</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-6 w-6">
+                          <AvatarFallback className="text-xs">
+                            {discussion.author?.name?.charAt(0).toUpperCase() || "U"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm font-medium">{discussion.author?.name || "Anonymous"}</span>
+                      </div>
+                      
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <MessageSquare className="h-4 w-4" />
+                          <span>{discussion.replies?.length || 0} replies</span>
+                        </div>
                       </div>
                     </div>
                   </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
 
-                  <div className="flex gap-2">
-                    {discussion.tags.map((tag) => (
-                      <Badge key={tag} variant="secondary" className="text-xs">
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* Create Discussion Form (shown when clicking New Discussion) */}
-        <Card className="hidden">
-          <CardHeader>
-            <CardTitle>Start a New Discussion</CardTitle>
-            <CardDescription>Share your questions or ideas with the class</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+      {/* Create Discussion Dialog */}
+      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+        <DialogContent data-testid="create-discussion-modal">
+          <DialogHeader>
+            <DialogTitle>Start a New Discussion</DialogTitle>
+            <DialogDescription>Share your questions or ideas with the class</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleCreatePost} className="space-y-4">
             <div className="space-y-2">
-              <Input placeholder="Discussion title..." />
+              <label className="text-sm font-medium">Select Course</label>
+              <select
+                className="w-full p-2 border rounded-md"
+                value={selectedCourse}
+                onChange={(e) => setSelectedCourse(e.target.value)}
+                required
+                data-testid="course-select"
+              >
+                <option value="">-- Select a course --</option>
+                {courses.map((enrollment: any) => (
+                  <option key={enrollment.course?._id} value={enrollment.course?._id}>
+                    {enrollment.course?.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+            
+            <div className="space-y-2">
+              <Input
+                placeholder="Discussion title..."
+                value={newPost.title}
+                onChange={(e) => setNewPost({ ...newPost, title: e.target.value })}
+                required
+                data-testid="title-input"
+              />
             </div>
             
             <div className="space-y-2">
               <Textarea 
                 placeholder="What would you like to discuss?" 
                 className="min-h-[150px]"
+                value={newPost.content}
+                onChange={(e) => setNewPost({ ...newPost, content: e.target.value })}
+                required
+                data-testid="content-input"
               />
             </div>
 
-            <div className="space-y-2">
-              <Input placeholder="Tags (comma separated)..." />
-            </div>
-
             <div className="flex gap-3">
-              <Button>Post Discussion</Button>
-              <Button variant="outline">Cancel</Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowCreateModal(false)}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={submitting} className="flex-1" data-testid="submit-post-btn">
+                {submitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Posting...
+                  </>
+                ) : (
+                  "Post Discussion"
+                )}
+              </Button>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };
