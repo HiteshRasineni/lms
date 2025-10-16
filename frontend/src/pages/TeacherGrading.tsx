@@ -7,8 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { FileText, User, Calendar, Loader2, ExternalLink } from "lucide-react";
-import apiClient from "@/lib/apiService";
+import { FileText, User, Calendar, Loader2, ExternalLink, AlertTriangle, Shield } from "lucide-react";
+import apiClient, { checkPlagiarism, getPlagiarismReports } from "@/lib/apiService";
 import { toast } from "@/hooks/use-toast";
 
 const TeacherGrading = () => {
@@ -16,6 +16,9 @@ const TeacherGrading = () => {
   const [selectedSubmission, setSelectedSubmission] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [grading, setGrading] = useState(false);
+  const [checkingPlagiarism, setCheckingPlagiarism] = useState(false);
+  const [plagiarismReports, setPlagiarismReports] = useState<any[]>([]);
+  const [showPlagiarismDialog, setShowPlagiarismDialog] = useState(false);
   const [gradeData, setGradeData] = useState({
     grade: "",
     feedback: "",
@@ -78,7 +81,39 @@ const TeacherGrading = () => {
       setGrading(false);
     }
   };
+  const handleCheckPlagiarism = async (assignmentId: string) => {
+    try {
+      setCheckingPlagiarism(true);
+      await checkPlagiarism(assignmentId);
+      toast({
+        title: "Success",
+        description: "Plagiarism check completed successfully",
+      });
+      loadPendingSubmissions();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to check plagiarism",
+        variant: "destructive",
+      });
+    } finally {
+      setCheckingPlagiarism(false);
+    }
+  };
 
+  const handleViewPlagiarismReports = async (assignmentId: string) => {
+    try {
+      const reports = await getPlagiarismReports(assignmentId);
+      setPlagiarismReports(reports);
+      setShowPlagiarismDialog(true);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Failed to load plagiarism reports",
+        variant: "destructive",
+      });
+    }
+  };
   if (loading) {
     return (
       <DashboardLayout userRole="teacher">
@@ -125,6 +160,12 @@ const TeacherGrading = () => {
                       {submission.assignment?.course?.title || "Course"}
                     </Badge>
                   </div>
+                  {submission.plagiarismData?.hasPlagiarism && (
+                    <div className="flex items-center gap-1 text-xs text-destructive mb-2">
+                      <AlertTriangle className="h-3 w-3" />
+                      <span>Plagiarism detected ({submission.plagiarismData.maxSimilarity}%)</span>
+                    </div>
+                  )}
                   <CardTitle className="text-base">{submission.assignment?.title || "Assignment"}</CardTitle>
                   <CardDescription className="flex items-center gap-1 mt-2">
                     <User className="h-3 w-3" />
@@ -184,7 +225,66 @@ const TeacherGrading = () => {
                   </Button>
                 </div>
               )}
-
+              {/* Plagiarism Status */}
+              <div className="space-y-2">
+                <Label>Plagiarism Check</Label>
+                {selectedSubmission.plagiarismChecked ? (
+                  <div className="space-y-2">
+                    {selectedSubmission.plagiarismData?.hasPlagiarism ? (
+                      <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 flex items-start gap-2">
+                        <AlertTriangle className="h-4 w-4 text-destructive mt-0.5" />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-destructive">
+                            Plagiarism Detected ({selectedSubmission.plagiarismData.maxSimilarity}%)
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Similar content found in other submissions
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-success/10 border border-success/20 rounded-lg p-3 flex items-center gap-2">
+                        <Shield className="h-4 w-4 text-success" />
+                        <p className="text-sm font-medium text-success">
+                          No plagiarism detected
+                        </p>
+                      </div>
+                    )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleViewPlagiarismReports(selectedSubmission.assignment._id);
+                      }}
+                    >
+                      View Detailed Report
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCheckPlagiarism(selectedSubmission.assignment._id);
+                    }}
+                    disabled={checkingPlagiarism}
+                  >
+                    {checkingPlagiarism ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Checking...
+                      </>
+                    ) : (
+                      <>
+                        <Shield className="h-4 w-4 mr-2" />
+                        Run Plagiarism Check
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
               <form onSubmit={handleGradeSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="grade">Grade (0-100) *</Label>
@@ -235,6 +335,56 @@ const TeacherGrading = () => {
                   </Button>
                 </div>
               </form>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+      {/* Plagiarism Reports Dialog */}
+      {showPlagiarismDialog && (
+        <Dialog open={showPlagiarismDialog} onOpenChange={() => setShowPlagiarismDialog(false)}>
+          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Plagiarism Report</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              {plagiarismReports.length === 0 ? (
+                <div className="text-center p-8 text-muted-foreground">
+                  <Shield className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                  <p>No plagiarism detected in the submissions</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {plagiarismReports.map((report, index) => (
+                    <Card key={index}>
+                      <CardContent className="pt-4">
+                        <div className="flex items-start justify-between">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <User className="h-4 w-4" />
+                              <p className="font-medium">{report.student}</p>
+                            </div>
+                            <p className="text-sm text-muted-foreground">{report.studentEmail}</p>
+                          </div>
+                          <Badge variant={report.similarity > 50 ? "destructive" : "secondary"}>
+                            {report.similarity.toFixed(1)}% similar
+                          </Badge>
+                        </div>
+                        <div className="mt-3 pt-3 border-t">
+                          <p className="text-sm">
+                            <span className="text-muted-foreground">Matched with:</span>{" "}
+                            <span className="font-medium">{report.matchedStudent}</span>
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+              <div className="flex justify-end pt-4 border-t">
+                <Button variant="outline" onClick={() => setShowPlagiarismDialog(false)}>
+                  Close
+                </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>

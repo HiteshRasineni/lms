@@ -1,6 +1,7 @@
 import Submission from "../models/Submission.js";
 import Assignment from "../models/Assignment.js";
 import Enrollment from "../models/Enrollment.js";
+import Topic from "../models/Topic.js";
 import { checkPlagiarism } from "../utils/plagiarismClient.js";
 import PlagiarismReport from "../models/PlagiarismReport.js";
 import fs from "fs";
@@ -17,23 +18,36 @@ export const submitAssignment = async (req, res, next) => {
       res.status(400);
       throw new Error("PDF file is required");
     }
-    const assignment = await Assignment.findById(assignmentId);
+    // Check if it's a regular assignment or a topic assignment
+    let assignment = await Assignment.findById(assignmentId);
+    let courseId;
     if (!assignment) {
-      // delete file
-      fs.unlinkSync(req.file.path);
-      res.status(404);
-      throw new Error("Assignment not found");
+      // Try to find it as a topic
+      const topic = await Topic.findById(assignmentId).populate({
+        path: "unit",
+        populate: { path: "course" }
+      });
+      
+      if (!topic || topic.type !== "assignment") {
+        fs.unlinkSync(req.file.path);
+        res.status(404);
+        throw new Error("Assignment not found");
+      }
+      
+      courseId = topic.unit.course._id;
+    } else {
+      courseId = assignment.course;
     }
 
     // Optionally: check student enrolled
-    const enrolled = await Enrollment.findOne({ course: assignment.course, student: req.user._id });
+    const enrolled = await Enrollment.findOne({ course: courseId, student: req.user._id });
     if (!enrolled && req.user.role !== "Teacher") {
       fs.unlinkSync(req.file.path);
       res.status(403);
       throw new Error("You are not enrolled in this course");
     }
 
-    const fileUrl = `/uploads/assignments/${req.file.filename}`; // served statically
+    const fileUrl = req.file.path; // Cloudinary URL
     const submission = await Submission.create({
       assignment: assignmentId,
       student: req.user._id,

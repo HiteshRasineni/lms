@@ -123,7 +123,7 @@ export const StudentCourseContent = ({ courseId, units }: StudentCourseContentPr
                   {selectedTopic.type === "pdf" && (
                     <div className="space-y-2">
                       <iframe
-                        src={selectedTopic.contentUrl}
+                        src={selectedTopic.contentUrl.replace('/upload/', '/upload/fl_attachment/')}
                         className="w-full h-[600px] rounded border"
                         data-testid="pdf-viewer"
                        title="PDF Viewer"

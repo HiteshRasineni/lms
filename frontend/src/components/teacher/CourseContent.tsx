@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, Edit2, FileVideo, FileText, ListChecks, File, Loader2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Plus, Trash2, Edit2, FileVideo, FileText, ListChecks, File, Loader2, Eye } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { getCourseUnits, createUnit, createTopic, deleteUnit, deleteTopic } from "@/lib/apiService";
 
@@ -19,6 +20,7 @@ export const CourseContent = ({ courseId, units: initialUnits, onRefresh }: Cour
   const [loading, setLoading] = useState(false);
   const [showNewUnit, setShowNewUnit] = useState(false);
   const [showNewTopic, setShowNewTopic] = useState<string | null>(null);
+  const [previewTopic, setPreviewTopic] = useState<any>(null);
   const [newUnitTitle, setNewUnitTitle] = useState("");
   const [newUnitDesc, setNewUnitDesc] = useState("");
   const [newTopic, setNewTopic] = useState({
@@ -342,14 +344,26 @@ export const CourseContent = ({ courseId, units: initialUnits, onRefresh }: Cour
                       )}
                     </div>
                   </div>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => handleDeleteTopic(topic._id)}
-                    data-testid={`delete-topic-btn-${unitIndex}-${topicIndex}`}
-                  >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
+                  <div className="flex gap-2">
+                    {topic.contentUrl && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setPreviewTopic(topic)}
+                        data-testid={`preview-topic-btn-${unitIndex}-${topicIndex}`}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleDeleteTopic(topic._id)}
+                      data-testid={`delete-topic-btn-${unitIndex}-${topicIndex}`}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
                 </div>
               ))
             ) : !showNewTopic && (
@@ -360,6 +374,59 @@ export const CourseContent = ({ courseId, units: initialUnits, onRefresh }: Cour
           </CardContent>
         </Card>
       ))}
+      {/* Preview Dialog for Teachers */}
+      {previewTopic && (
+        <Dialog open={!!previewTopic} onOpenChange={() => setPreviewTopic(null)}>
+          <DialogContent className="max-w-4xl max-h-[90vh]" data-testid="teacher-preview-dialog">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                {getTopicIcon(previewTopic.type)}
+                {previewTopic.title}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              {previewTopic.description && (
+                <p className="text-sm text-muted-foreground">{previewTopic.description}</p>
+              )}
+              
+              {previewTopic.contentUrl && (
+                <div className="border rounded-lg p-4 bg-muted/50">
+                  {previewTopic.type === "video" && (
+                    <video controls className="w-full rounded" data-testid="teacher-video-preview">
+                      <source src={previewTopic.contentUrl} />
+                      Your browser does not support the video tag.
+                    </video>
+                  )}
+                  {previewTopic.type === "pdf" && (
+                    <div className="space-y-2">
+                      <iframe
+                        src={previewTopic.contentUrl.replace('/upload/', '/upload/fl_attachment/')}
+                        className="w-full h-[600px] rounded border"
+                        data-testid="teacher-pdf-preview"
+                        title="PDF Preview"
+                      />
+                      <p className="text-xs text-muted-foreground text-center">
+                        <a href={previewTopic.contentUrl} target="_blank" rel="noopener noreferrer" className="text-primary underline">Open in new tab</a>
+                      </p>
+                    </div>
+                  )}
+                  {previewTopic.type === "assignment" && (
+                    <div className="text-center p-8">
+                      <p className="mb-4">Assignment content: {previewTopic.contentUrl}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="flex justify-end pt-4 border-t">
+                <Button variant="outline" onClick={() => setPreviewTopic(null)}>
+                  Close
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };

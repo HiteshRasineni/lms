@@ -3,6 +3,7 @@ import Submission from "../models/Submission.js";
 import Assignment from "../models/Assignment.js";
 import User from "../models/User.js";
 import Course from "../models/Course.js";
+import PlagiarismReport from "../models/PlagiarismReport.js";
 
 export const gradeSubmission = async (req, res, next) => {
   try {
@@ -138,11 +139,36 @@ export const getPendingGrades = async (req, res, next) => {
     // Find grades that exist
     const existingGrades = await Grade.find({ submission: { $in: submissionIds } });
     const gradedSubmissionIds = existingGrades.map(g => g.submission.toString());
+
+    // Find plagiarism reports
+    const plagiarismReports = await PlagiarismReport.find({ 
+      submission: { $in: submissionIds } 
+    });
     
-    // Filter out submissions that already have grades
-    const pendingSubmissions = submissions.filter(
-      s => !gradedSubmissionIds.includes(s._id.toString())
-    );
+    // Create a map of submission IDs to plagiarism data
+    const plagiarismMap = {};
+    for (const report of plagiarismReports) {
+      if (!plagiarismMap[report.submission.toString()]) {
+        plagiarismMap[report.submission.toString()] = {
+          hasPlagiarism: report.similarity > 30,
+          maxSimilarity: report.similarity
+        };
+      } else {
+        if (report.similarity > plagiarismMap[report.submission.toString()].maxSimilarity) {
+          plagiarismMap[report.submission.toString()].maxSimilarity = report.similarity;
+          plagiarismMap[report.submission.toString()].hasPlagiarism = report.similarity > 30;
+        }
+      }
+    }
+    
+    // Filter out submissions that already have grades and add plagiarism info
+    const pendingSubmissions = submissions
+      .filter(s => !gradedSubmissionIds.includes(s._id.toString()))
+      .map(s => ({
+        ...s.toObject(),
+        plagiarismChecked: s.plagiarismChecked || false,
+        plagiarismData: plagiarismMap[s._id.toString()] || null
+      }));
 
     res.json(pendingSubmissions);
   } catch (err) {
