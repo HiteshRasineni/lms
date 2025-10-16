@@ -13,9 +13,13 @@ import VerifyNotice from "./pages/VerifyNotice";
 import StudentDashboard from "./pages/StudentDashboard";
 import TeacherDashboard from "./pages/TeacherDashboard";
 import CourseList from "./pages/CourseList";
+import ExploreCourses from "./pages/ExploreCourses";
+import StudentCourseDetail from "./pages/StudentCourseDetail";
 import Assignments from "./pages/Assignments";
 import Grades from "./pages/Grades";
 import Forum from "./pages/Forum";
+import Calendar from "./pages/Calendar";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import LandingIndex from "./pages/landing/LandingIndex";
 import AboutUs from "./pages/landing/AboutUs";
@@ -72,6 +76,22 @@ const App = () => (
             }
           />
           <Route
+            path="/courses/:courseId"
+            element={
+              <ProtectedRoute>
+                <StudentCourseDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/explore-courses"
+            element={
+              <ProtectedRoute>
+                <ExploreCourses />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/assignments"
             element={
               <ProtectedRoute>
@@ -84,6 +104,22 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <Grades />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/calendar"
+            element={
+              <ProtectedRoute>
+                <Calendar />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <Settings />
               </ProtectedRoute>
             }
           />

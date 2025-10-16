@@ -304,5 +304,9 @@ export const getMyGrades = async (studentId: string) => {
   const response = await apiClient.get(`/grades/student/${studentId}`);
   return response.data;
 };
+export const getCourseGrades = async (courseId: string) => {
+  const response = await apiClient.get(`/grades/course/${courseId}`);
+  return response.data;
+};
 
 export default apiClient;

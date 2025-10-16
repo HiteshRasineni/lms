@@ -27,6 +27,7 @@ const userSchema = new mongoose.Schema({
   isVerified: { type: Boolean, default: false },
   verificationToken: { type: String, default: null },
   verificationExpires: { type: Date, default: null },
+
   // Gamification
   xp: { type: Number, default: 0 },
   badges: [{ type: mongoose.Schema.Types.ObjectId, ref: "Badge" }],
@@ -34,6 +35,16 @@ const userSchema = new mongoose.Schema({
   // Profile
   bio: String,
   avatar: String,
+  profilePicture: String,
+  
+  // Notification Settings
+  notificationSettings: {
+    emailNotifications: { type: Boolean, default: true },
+    assignmentReminders: { type: Boolean, default: true },
+    gradeNotifications: { type: Boolean, default: true },
+    forumReplies: { type: Boolean, default: true },
+    courseAnnouncements: { type: Boolean, default: true },
+  },
 }, { timestamps: true });
 
 // hash password before saving (skip if no password)

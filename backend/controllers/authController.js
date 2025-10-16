@@ -182,3 +182,69 @@ export const resendVerification = async (req, res, next) => {
     next(err);
   }
 };
+
+
+export const updateProfile = async (req, res, next) => {
+  try {
+    const { name, email } = req.body;
+    
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      res.status(404);
+      throw new Error("User not found");
+    }
+
+    // Check if email is already taken by another user
+    if (email && email !== user.email) {
+      const emailExists = await User.findOne({ email });
+      if (emailExists) {
+        res.status(400);
+        throw new Error("Email already in use");
+      }
+    }
+
+    if (name) user.name = name;
+    if (email) user.email = email;
+
+    await user.save();
+
+    res.json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const updateNotificationSettings = async (req, res, next) => {
+  try {
+    const settings = req.body;
+    
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      res.status(404);
+      throw new Error("User not found");
+    }
+
+    // Update notification settings
+    if (!user.notificationSettings) {
+      user.notificationSettings = {};
+    }
+    
+    Object.keys(settings).forEach(key => {
+      user.notificationSettings[key] = settings[key];
+    });
+
+    await user.save();
+
+    res.json({
+      message: "Notification settings updated successfully",
+      settings: user.notificationSettings,
+    });
+  } catch (err) {
+    next(err);
+  }
+};

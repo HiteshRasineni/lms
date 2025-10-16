@@ -6,6 +6,8 @@ import {
   getProfile,
   verifyEmail,
   resendVerification,
+  updateProfile,
+  updateNotificationSettings,
 } from "../controllers/authController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
@@ -15,6 +17,8 @@ const router = express.Router();
 router.post("/register", register);
 router.post("/login", login);
 router.get("/profile", protect, getProfile);
+router.put("/profile", protect, updateProfile);
+router.put("/notifications", protect, updateNotificationSettings);
 
 // Email verification
 router.get("/verify-email", verifyEmail);

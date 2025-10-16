@@ -63,6 +63,33 @@ export const uploadAssignment = asyncHandler(async (req, res) => {
 // BOTH: Get assignments for a course
 // ===================================
 export const getAssignmentsByCourse = asyncHandler(async (req, res) => {
-  const assignments = await Assignment.find({ course: req.params.courseId });
+  const assignments = await Assignment.find({ course: req.params.courseId })
+    .populate("createdBy", "name email role")
+    .sort({ createdAt: -1 });
+  res.status(200).json(assignments);
+});
+
+// ===================================
+// BOTH: Get assignments for logged-in user
+// ===================================
+export const getMyAssignments = asyncHandler(async (req, res) => {
+  let assignments;
+
+  if (req.user.role === "teacher") {
+    // ✅ Teacher: Fetch assignments created by them
+    assignments = await Assignment.find({ createdBy: req.user._id })
+      .populate("course", "name code")
+      .sort({ createdAt: -1 });
+  } else if (req.user.role === "student") {
+    // ✅ Student: Fetch assignments for their enrolled courses
+    const enrolledCourses = await Course.find({ students: req.user._id }).select("_id");
+    assignments = await Assignment.find({ course: { $in: enrolledCourses } })
+      .populate("course", "name code")
+      .sort({ dueDate: 1 });
+  } else {
+    res.status(403);
+    throw new Error("Invalid user role");
+  }
+
   res.status(200).json(assignments);
 });

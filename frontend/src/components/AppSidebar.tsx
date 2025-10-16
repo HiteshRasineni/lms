@@ -1,4 +1,4 @@
-import { Home, BookOpen, FileText, GraduationCap, MessageSquare, BarChart3, Users } from "lucide-react";
+import { Home, BookOpen, FileText, GraduationCap, MessageSquare, BarChart3, Users, Calendar, Compass, Settings } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
   Sidebar,
@@ -15,9 +15,12 @@ import {
 const studentItems = [
   { title: "Dashboard", url: "/student/dashboard", icon: Home },
   { title: "My Courses", url: "/courses", icon: BookOpen },
+  { title: "Explore Courses", url: "/explore-courses", icon: Compass },
   { title: "Assignments", url: "/assignments", icon: FileText },
   { title: "Grades", url: "/grades", icon: BarChart3 },
+  { title: "Calendar", url: "/calendar", icon: Calendar },
   { title: "Forum", url: "/forum", icon: MessageSquare },
+  { title: "Settings", url: "/settings", icon: Settings },
 ];
 
 const teacherItems = [
@@ -26,6 +29,8 @@ const teacherItems = [
   { title: "Students", url: "/teacher/students", icon: Users },
   { title: "Assignments", url: "/teacher/assignments", icon: FileText },
   { title: "Grading", url: "/teacher/grading", icon: BarChart3 },
+  { title: "Calendar", url: "/calendar", icon: Calendar },
+  { title: "Settings", url: "/settings", icon: Settings },
 ];
 
 export function AppSidebar({ userRole = "student" }: { userRole?: "student" | "teacher" }) {
