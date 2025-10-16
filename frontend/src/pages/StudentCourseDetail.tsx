@@ -4,8 +4,21 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { BookOpen, BarChart3, MessageSquare, Bell, Trophy, ArrowLeft, Loader2 } from "lucide-react";
-import { getCourseById, getCourseAnnouncements, getForumPosts } from "@/lib/apiService";
+import {
+  BookOpen,
+  BarChart3,
+  MessageSquare,
+  Bell,
+  Trophy,
+  ArrowLeft,
+  Loader2,
+} from "lucide-react";
+import {
+  getCourseById,
+  getCourseAnnouncements,
+  getForumPosts,
+  getEnrolledCourses,
+} from "@/lib/apiService";
 import { toast } from "@/hooks/use-toast";
 import { StudentCourseContent } from "@/components/student/StudentCourseContent";
 import { StudentCourseGrades } from "@/components/student/StudentCourseGrades";
@@ -17,6 +30,7 @@ const StudentCourseDetail = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
   const [course, setCourse] = useState<any>(null);
+  const [enrollmentId, setEnrollmentId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -28,8 +42,19 @@ const StudentCourseDetail = () => {
   const loadCourse = async () => {
     try {
       setLoading(true);
-      const data = await getCourseById(courseId!);
-      setCourse(data);
+      const [courseData, enrollmentsData] = await Promise.all([
+        getCourseById(courseId!),
+        getEnrolledCourses(),
+      ]);
+      setCourse(courseData);
+
+      // Find the enrollment for this course
+      const enrollment = enrollmentsData.find(
+        (enrollment: any) => enrollment.course?._id === courseId
+      );
+      if (enrollment) {
+        setEnrollmentId(enrollment._id);
+      }
     } catch (error: any) {
       toast({
         title: "Error",
@@ -56,7 +81,9 @@ const StudentCourseDetail = () => {
       <DashboardLayout userRole="student">
         <div className="text-center p-8">
           <p>Course not found</p>
-          <Button onClick={() => navigate("/courses")} className="mt-4">Back to Courses</Button>
+          <Button onClick={() => navigate("/courses")} className="mt-4">
+            Back to Courses
+          </Button>
         </div>
       </DashboardLayout>
     );
@@ -75,7 +102,10 @@ const StudentCourseDetail = () => {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to My Courses
           </Button>
-          <h1 className="text-3xl font-bold text-foreground mb-2" data-testid="course-title">
+          <h1
+            className="text-3xl font-bold text-foreground mb-2"
+            data-testid="course-title"
+          >
             {course.title}
           </h1>
           <p className="text-muted-foreground">
@@ -108,7 +138,11 @@ const StudentCourseDetail = () => {
           </TabsList>
 
           <TabsContent value="content">
-            <StudentCourseContent courseId={courseId!} units={course.units || []} />
+            <StudentCourseContent
+              courseId={courseId!}
+              units={course.units || []}
+              enrollmentId={enrollmentId || undefined}
+            />
           </TabsContent>
           <TabsContent value="grades">
             <StudentCourseGrades courseId={courseId!} />

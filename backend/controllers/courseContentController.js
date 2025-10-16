@@ -50,7 +50,7 @@ export const getUnitTopics = asyncHandler(async (req, res) => {
 // @route   POST /api/units/:unitId/topics
 // @access  Private (Teacher)
 export const createTopic = asyncHandler(async (req, res) => {
-  const { title, type, contentUrl, description, order } = req.body;
+  const { title, type, contentUrl, description, order, dueDate, maxPoints } = req.body;
 
   const unit = await CourseUnit.findById(req.params.unitId).populate("course");
   if (!unit) {
@@ -72,6 +72,12 @@ export const createTopic = asyncHandler(async (req, res) => {
     description,
     order,
   };
+
+  // Add assignment-specific fields if type is assignment
+  if (type === "assignment") {
+    if (dueDate) topicData.dueDate = new Date(dueDate);
+    if (maxPoints) topicData.maxPoints = parseInt(maxPoints);
+  }
 
 // Handle file upload if present
   if (req.file) {

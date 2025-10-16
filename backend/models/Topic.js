@@ -7,6 +7,9 @@ const topicSchema = new mongoose.Schema({
   contentUrl: String, // URL to video or PDF on Cloudinary
   description: String,
   order: { type: Number, default: 0 },
+  // Assignment-specific fields
+  dueDate: Date, // Due date for assignments
+  maxPoints: { type: Number, default: 100 }, // Maximum points for assignments
 }, { timestamps: true });
 
 export default mongoose.model("Topic", topicSchema);

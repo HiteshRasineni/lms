@@ -155,7 +155,7 @@ export const getTeacherCourses = async () => {
 };
 
 export const getEnrolledCourses = async () => {
-  const response = await apiClient.get("/courses/enrolled");
+  const response = await apiClient.get("/enrollments");
   return response.data;
 };
 export const getCourseById = async (id: string) => {
@@ -327,6 +327,13 @@ export const submitAssignment = async (formData: FormData) => {
   return response.data;
 };
 
+export const updateSubmission = async (submissionId: string, formData: FormData) => {
+  const response = await apiClient.put(`/submissions/${submissionId}`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return response.data;
+};
+
 export const getMySubmissions = async () => {
   const response = await apiClient.get("/submissions/my-submissions");
   return response.data;
@@ -334,6 +341,27 @@ export const getMySubmissions = async () => {
 
 export const getSubmissionsByAssignment = async (assignmentId: string) => {
   const response = await apiClient.get(`/submissions/assignment/${assignmentId}`);
+  return response.data;
+};
+
+// ====================
+// REVIEWS
+// ====================
+export const submitReview = async (courseId: string, reviewData: { rating: number; comment: string }) => {
+  const response = await apiClient.post(`/reviews/${courseId}`, reviewData);
+  return response.data;
+};
+
+export const getCourseReviews = async (courseId: string) => {
+  const response = await apiClient.get(`/reviews/${courseId}`);
+  return response.data;
+};
+
+// ====================
+// ENROLLMENTS
+// ====================
+export const updateEnrollmentProgress = async (enrollmentId: string, topicId: string) => {
+  const response = await apiClient.put(`/enrollments/${enrollmentId}/progress`, { topicId });
   return response.data;
 };
 // ====================

@@ -3,9 +3,18 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronRight, Clock, MapPin, Video, FileText, Calendar as CalendarIcon, Loader2 } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  MapPin,
+  Video,
+  FileText,
+  Calendar as CalendarIcon,
+  Loader2,
+} from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { getEvents, getTodos } from "@/lib/apiService";
+import { getEvents, getTodos, getAssignments } from "@/lib/apiService";
 import { toast } from "@/hooks/use-toast";
 
 const Calendar = () => {
@@ -14,6 +23,7 @@ const Calendar = () => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [events, setEvents] = useState<any[]>([]);
   const [todos, setTodos] = useState<any[]>([]);
+  const [assignments, setAssignments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -23,16 +33,28 @@ const Calendar = () => {
   const loadCalendarData = async () => {
     try {
       setLoading(true);
-      const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-      const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+      const startOfMonth = new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth(),
+        1
+      );
+      const endOfMonth = new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth() + 1,
+        0
+      );
 
-      const [eventsData, todosData] = await Promise.all([
-        getEvents(startOfMonth.toISOString(), endOfMonth.toISOString()).catch(() => []),
+      const [eventsData, todosData, assignmentsData] = await Promise.all([
+        getEvents(startOfMonth.toISOString(), endOfMonth.toISOString()).catch(
+          () => []
+        ),
         getTodos().catch(() => []),
+        getAssignments().catch(() => []),
       ]);
 
       setEvents(eventsData);
       setTodos(todosData);
+      setAssignments(assignmentsData);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -78,12 +100,28 @@ const Calendar = () => {
     });
   };
 
+  const getAssignmentsForDate = (date: Date) => {
+    return assignments.filter((assignment) => {
+      if (!assignment.dueDate) return false;
+      const assignmentDate = new Date(assignment.dueDate);
+      return (
+        assignmentDate.getDate() === date.getDate() &&
+        assignmentDate.getMonth() === date.getMonth() &&
+        assignmentDate.getFullYear() === date.getFullYear()
+      );
+    });
+  };
+
   const previousMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1));
+    setCurrentDate(
+      new Date(currentDate.getFullYear(), currentDate.getMonth() - 1)
+    );
   };
 
   const nextMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1));
+    setCurrentDate(
+      new Date(currentDate.getFullYear(), currentDate.getMonth() + 1)
+    );
   };
 
   const { daysInMonth, startingDayOfWeek } = getDaysInMonth(currentDate);
@@ -97,7 +135,9 @@ const Calendar = () => {
   }
   // Days of the month
   for (let day = 1; day <= daysInMonth; day++) {
-    calendarDays.push(new Date(currentDate.getFullYear(), currentDate.getMonth(), day));
+    calendarDays.push(
+      new Date(currentDate.getFullYear(), currentDate.getMonth(), day)
+    );
   }
 
   const getEventIcon = (type: string) => {
@@ -115,12 +155,20 @@ const Calendar = () => {
 
   const selectedDateEvents = selectedDate ? getEventsForDate(selectedDate) : [];
   const selectedDateTodos = selectedDate ? getTodosForDate(selectedDate) : [];
+  const selectedDateAssignments = selectedDate
+    ? getAssignmentsForDate(selectedDate)
+    : [];
 
   return (
-    <DashboardLayout userRole={user?.role === "Teacher" ? "teacher" : "student"}>
+    <DashboardLayout
+      userRole={user?.role === "Teacher" ? "teacher" : "student"}
+    >
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-foreground mb-2" data-testid="calendar-title">
+          <h1
+            className="text-3xl font-bold text-foreground mb-2"
+            data-testid="calendar-title"
+          >
             Calendar
           </h1>
           <p className="text-muted-foreground">
@@ -162,18 +210,28 @@ const Calendar = () => {
                 <div className="space-y-2">
                   {/* Week day headers */}
                   <div className="grid grid-cols-7 gap-2 mb-2">
-                    {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-                      <div key={day} className="text-center text-sm font-medium text-muted-foreground py-2">
-                        {day}
-                      </div>
-                    ))}
+                    {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(
+                      (day) => (
+                        <div
+                          key={day}
+                          className="text-center text-sm font-medium text-muted-foreground py-2"
+                        >
+                          {day}
+                        </div>
+                      )
+                    )}
                   </div>
 
                   {/* Calendar grid */}
                   <div className="grid grid-cols-7 gap-2">
                     {calendarDays.map((date, index) => {
                       if (!date) {
-                        return <div key={`empty-${index}`} className="aspect-square" />;
+                        return (
+                          <div
+                            key={`empty-${index}`}
+                            className="aspect-square"
+                          />
+                        );
                       }
 
                       const isToday =
@@ -189,7 +247,11 @@ const Calendar = () => {
 
                       const dayEvents = getEventsForDate(date);
                       const dayTodos = getTodosForDate(date);
-                      const hasItems = dayEvents.length > 0 || dayTodos.length > 0;
+                      const dayAssignments = getAssignmentsForDate(date);
+                      const hasItems =
+                        dayEvents.length > 0 ||
+                        dayTodos.length > 0 ||
+                        dayAssignments.length > 0;
 
                       return (
                         <button
@@ -204,14 +266,28 @@ const Calendar = () => {
                           }`}
                           data-testid={`calendar-day-${date.getDate()}`}
                         >
-                          <div className="text-sm font-medium">{date.getDate()}</div>
+                          <div className="text-sm font-medium">
+                            {date.getDate()}
+                          </div>
                           {hasItems && (
                             <div className="flex gap-1 mt-1 justify-center flex-wrap">
                               {dayEvents.slice(0, 2).map((_, i) => (
-                                <div key={i} className="w-1 h-1 rounded-full bg-primary" />
+                                <div
+                                  key={i}
+                                  className="w-1 h-1 rounded-full bg-primary"
+                                />
                               ))}
                               {dayTodos.slice(0, 2).map((_, i) => (
-                                <div key={`todo-${i}`} className="w-1 h-1 rounded-full bg-accent" />
+                                <div
+                                  key={`todo-${i}`}
+                                  className="w-1 h-1 rounded-full bg-accent"
+                                />
+                              ))}
+                              {dayAssignments.slice(0, 2).map((_, i) => (
+                                <div
+                                  key={`assignment-${i}`}
+                                  className="w-1 h-1 rounded-full bg-orange-500"
+                                />
                               ))}
                             </div>
                           )}
@@ -256,7 +332,9 @@ const Calendar = () => {
                                 {getEventIcon(event.type)}
                               </Badge>
                               <div className="flex-1 min-w-0">
-                                <p className="font-medium text-sm">{event.title}</p>
+                                <p className="font-medium text-sm">
+                                  {event.title}
+                                </p>
                                 {event.description && (
                                   <p className="text-xs text-muted-foreground line-clamp-2">
                                     {event.description}
@@ -265,7 +343,9 @@ const Calendar = () => {
                                 <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
                                   <Clock className="h-3 w-3" />
                                   <span>
-                                    {new Date(event.startTime).toLocaleTimeString("default", {
+                                    {new Date(
+                                      event.startTime
+                                    ).toLocaleTimeString("default", {
                                       hour: "2-digit",
                                       minute: "2-digit",
                                     })}
@@ -279,10 +359,66 @@ const Calendar = () => {
                     </div>
                   )}
 
+                  {/* Assignments */}
+                  {selectedDateAssignments.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-semibold mb-2">
+                        Assignments Due
+                      </h3>
+                      <div className="space-y-2">
+                        {selectedDateAssignments.map((assignment) => (
+                          <div
+                            key={assignment._id}
+                            className="border rounded-lg p-3 space-y-1"
+                            data-testid="assignment-item"
+                          >
+                            <div className="flex items-start gap-2">
+                              <Badge variant="outline" className="mt-0.5">
+                                <FileText className="h-3 w-3" />
+                              </Badge>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-sm">
+                                  {assignment.title}
+                                </p>
+                                {assignment.description && (
+                                  <p className="text-xs text-muted-foreground line-clamp-2">
+                                    {assignment.description}
+                                  </p>
+                                )}
+                                <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                                  <span>
+                                    {assignment.course?.title || "Course"}
+                                  </span>
+                                  <span>•</span>
+                                  <span>
+                                    {assignment.maxPoints || 100} points
+                                  </span>
+                                  {assignment.submitted && (
+                                    <>
+                                      <span>•</span>
+                                      <Badge
+                                        variant="secondary"
+                                        className="text-xs"
+                                      >
+                                        Submitted
+                                      </Badge>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {/* To-dos */}
                   {selectedDateTodos.length > 0 && (
                     <div>
-                      <h3 className="text-sm font-semibold mb-2">To-Do Items</h3>
+                      <h3 className="text-sm font-semibold mb-2">
+                        To-Do Items
+                      </h3>
                       <div className="space-y-2">
                         {selectedDateTodos.map((todo) => (
                           <div
@@ -292,10 +428,16 @@ const Calendar = () => {
                           >
                             <p className="font-medium text-sm">{todo.title}</p>
                             {todo.description && (
-                              <p className="text-xs text-muted-foreground">{todo.description}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {todo.description}
+                              </p>
                             )}
                             <Badge
-                              variant={todo.priority === "high" ? "destructive" : "outline"}
+                              variant={
+                                todo.priority === "high"
+                                  ? "destructive"
+                                  : "outline"
+                              }
                               className="text-xs"
                             >
                               {todo.priority}
@@ -306,11 +448,13 @@ const Calendar = () => {
                     </div>
                   )}
 
-                  {selectedDateEvents.length === 0 && selectedDateTodos.length === 0 && (
-                    <p className="text-center text-muted-foreground py-8 text-sm">
-                      No events or to-do items for this date.
-                    </p>
-                  )}
+                  {selectedDateEvents.length === 0 &&
+                    selectedDateTodos.length === 0 &&
+                    selectedDateAssignments.length === 0 && (
+                      <p className="text-center text-muted-foreground py-8 text-sm">
+                        No events, assignments, or to-do items for this date.
+                      </p>
+                    )}
                 </div>
               ) : (
                 <p className="text-center text-muted-foreground py-8 text-sm">

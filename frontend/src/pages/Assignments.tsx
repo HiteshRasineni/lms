@@ -1,23 +1,37 @@
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Upload, FileText, Calendar, Loader2, CheckCircle } from "lucide-react";
-import { getAssignments, submitAssignment } from "@/lib/apiService";
+import {
+  getAssignments,
+  submitAssignment,
+  updateSubmission,
+} from "@/lib/apiService";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 
 const Assignments = () => {
   const { user } = useAuth();
   const [assignments, setAssignments] = useState<any[]>([]);
-  const [selectedAssignment, setSelectedAssignment] = useState<any | null>(null);
+  const [selectedAssignment, setSelectedAssignment] = useState<any | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [savingDraft, setSavingDraft] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [comments, setComments] = useState("");
+  const [draftSubmission, setDraftSubmission] = useState<any>(null);
 
   useEffect(() => {
     loadAssignments();
@@ -30,6 +44,8 @@ const Assignments = () => {
       setAssignments(data);
       if (data.length > 0) {
         setSelectedAssignment(data[0]);
+        // Check for existing draft submission
+        checkForDraftSubmission(data[0]);
       }
     } catch (error: any) {
       toast({
@@ -42,6 +58,16 @@ const Assignments = () => {
     }
   };
 
+  const checkForDraftSubmission = async (assignment: any) => {
+    try {
+      // This would need to be implemented in the backend to get draft submissions
+      // For now, we'll assume no draft exists
+      setDraftSubmission(null);
+    } catch (error) {
+      console.error("Error checking for draft submission:", error);
+    }
+  };
+
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       setSelectedFile(event.target.files[0]);
@@ -50,7 +76,7 @@ const Assignments = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!selectedFile) {
       toast({
         title: "Error",
@@ -74,12 +100,13 @@ const Assignments = () => {
       const formData = new FormData();
       formData.append("file", selectedFile);
       formData.append("assignmentId", selectedAssignment._id);
+      formData.append("isDraft", "false");
       if (comments) {
         formData.append("comments", comments);
       }
 
       await submitAssignment(formData);
-      
+
       toast({
         title: "Success",
         description: "Assignment submitted successfully",
@@ -87,15 +114,57 @@ const Assignments = () => {
 
       setSelectedFile(null);
       setComments("");
+      setDraftSubmission(null);
       loadAssignments();
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.response?.data?.message || "Failed to submit assignment",
+        description:
+          error.response?.data?.message || "Failed to submit assignment",
         variant: "destructive",
       });
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleSaveDraft = async () => {
+    if (!selectedAssignment) {
+      toast({
+        title: "Error",
+        description: "Please select an assignment",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setSavingDraft(true);
+      const formData = new FormData();
+      if (selectedFile) {
+        formData.append("file", selectedFile);
+      }
+      formData.append("assignmentId", selectedAssignment._id);
+      formData.append("isDraft", "true");
+      if (comments) {
+        formData.append("comments", comments);
+      }
+
+      const result = await submitAssignment(formData);
+      setDraftSubmission(result);
+
+      toast({
+        title: "Success",
+        description: "Draft saved successfully",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to save draft",
+        variant: "destructive",
+      });
+    } finally {
+      setSavingDraft(false);
     }
   };
 
@@ -113,10 +182,15 @@ const Assignments = () => {
     <DashboardLayout userRole="student">
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-foreground mb-2" data-testid="assignments-title">
+          <h1
+            className="text-3xl font-bold text-foreground mb-2"
+            data-testid="assignments-title"
+          >
             Assignments
           </h1>
-          <p className="text-muted-foreground">View and submit your course assignments.</p>
+          <p className="text-muted-foreground">
+            View and submit your course assignments.
+          </p>
         </div>
 
         {assignments.length === 0 ? (
@@ -125,7 +199,8 @@ const Assignments = () => {
               <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
               <h3 className="text-lg font-semibold mb-2">No Assignments</h3>
               <p className="text-muted-foreground">
-                You don't have any assignments yet. They will appear here once your instructors create them.
+                You don't have any assignments yet. They will appear here once
+                your instructors create them.
               </p>
             </CardContent>
           </Card>
@@ -138,15 +213,21 @@ const Assignments = () => {
                 <Card
                   key={assignment._id}
                   className={`cursor-pointer hover:bg-muted/50 transition-colors ${
-                    selectedAssignment?._id === assignment._id ? "border-primary" : ""
+                    selectedAssignment?._id === assignment._id
+                      ? "border-primary"
+                      : ""
                   }`}
                   onClick={() => setSelectedAssignment(assignment)}
                   data-testid={`assignment-card-${assignment._id}`}
                 >
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
-                      <CardTitle className="text-sm">{assignment.title}</CardTitle>
-                      <Badge variant={assignment.submitted ? "secondary" : "default"}>
+                      <CardTitle className="text-sm">
+                        {assignment.title}
+                      </CardTitle>
+                      <Badge
+                        variant={assignment.submitted ? "secondary" : "default"}
+                      >
                         {assignment.submitted ? "Submitted" : "Pending"}
                       </Badge>
                     </div>
@@ -157,10 +238,18 @@ const Assignments = () => {
                   <CardContent>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <Calendar className="h-3 w-3" />
-                      <span>Due: {new Date(assignment.dueDate).toLocaleDateString()}</span>
+                      <span>
+                        Due:{" "}
+                        {assignment.dueDate
+                          ? new Date(assignment.dueDate).toLocaleDateString()
+                          : "No due date"}
+                      </span>
                     </div>
                     <div className="mt-2 text-xs">
-                      <span className="font-medium">{assignment.maxPoints || 100}</span> points
+                      <span className="font-medium">
+                        {assignment.maxPoints || 100}
+                      </span>{" "}
+                      points
                     </div>
                   </CardContent>
                 </Card>
@@ -180,29 +269,48 @@ const Assignments = () => {
                             {selectedAssignment.course?.title || "Course"}
                           </CardDescription>
                         </div>
-                        <Badge variant={selectedAssignment.submitted ? "secondary" : "default"}>
-                          {selectedAssignment.submitted ? "Submitted" : "Pending"}
+                        <Badge
+                          variant={
+                            selectedAssignment.submitted
+                              ? "secondary"
+                              : "default"
+                          }
+                        >
+                          {selectedAssignment.submitted
+                            ? "Submitted"
+                            : "Pending"}
                         </Badge>
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
-                          <span className="text-muted-foreground">Due Date:</span>
+                          <span className="text-muted-foreground">
+                            Due Date:
+                          </span>
                           <p className="font-medium">
-                            {new Date(selectedAssignment.dueDate).toLocaleDateString()}
+                            {selectedAssignment.dueDate
+                              ? new Date(
+                                  selectedAssignment.dueDate
+                                ).toLocaleDateString()
+                              : "No due date"}
                           </p>
                         </div>
                         <div>
-                          <span className="text-muted-foreground">Total Points:</span>
-                          <p className="font-medium">{selectedAssignment.maxPoints || 100}</p>
+                          <span className="text-muted-foreground">
+                            Total Points:
+                          </span>
+                          <p className="font-medium">
+                            {selectedAssignment.maxPoints || 100}
+                          </p>
                         </div>
                       </div>
 
                       <div>
                         <h3 className="font-semibold mb-2">Description</h3>
                         <p className="text-sm text-muted-foreground">
-                          {selectedAssignment.description || "No description provided"}
+                          {selectedAssignment.description ||
+                            "No description provided"}
                         </p>
                       </div>
                     </CardContent>
@@ -212,7 +320,9 @@ const Assignments = () => {
                     <Card>
                       <CardHeader>
                         <CardTitle>Submit Assignment</CardTitle>
-                        <CardDescription>Upload your assignment files</CardDescription>
+                        <CardDescription>
+                          Upload your assignment files
+                        </CardDescription>
                       </CardHeader>
                       <CardContent>
                         <form onSubmit={handleSubmit} className="space-y-4">
@@ -226,10 +336,15 @@ const Assignments = () => {
                                 className="hidden"
                                 accept=".pdf,.doc,.docx,.zip"
                               />
-                              <label htmlFor="file-upload" className="cursor-pointer">
+                              <label
+                                htmlFor="file-upload"
+                                className="cursor-pointer"
+                              >
                                 <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
                                 <p className="text-sm text-muted-foreground mb-1">
-                                  {selectedFile ? selectedFile.name : "Click to upload or drag and drop"}
+                                  {selectedFile
+                                    ? selectedFile.name
+                                    : "Click to upload or drag and drop"}
                                 </p>
                                 <p className="text-xs text-muted-foreground">
                                   PDF, DOC, ZIP up to 10MB
@@ -239,7 +354,9 @@ const Assignments = () => {
                           </div>
 
                           <div className="space-y-2">
-                            <Label htmlFor="comments">Additional Comments</Label>
+                            <Label htmlFor="comments">
+                              Additional Comments
+                            </Label>
                             <Textarea
                               id="comments"
                               placeholder="Any additional notes or explanations..."
@@ -253,7 +370,7 @@ const Assignments = () => {
                           <div className="flex gap-3">
                             <Button
                               type="submit"
-                              className="flex-1"
+                              className="flex-[2]"
                               disabled={submitting || !selectedFile}
                               data-testid="submit-assignment-btn"
                             >
@@ -269,6 +386,23 @@ const Assignments = () => {
                                 </>
                               )}
                             </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={handleSaveDraft}
+                              disabled={savingDraft}
+                              className="flex-1"
+                              data-testid="save-draft-btn"
+                            >
+                              {savingDraft ? (
+                                <>
+                                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                  Saving...
+                                </>
+                              ) : (
+                                "Save Draft"
+                              )}
+                            </Button>
                           </div>
                         </form>
                       </CardContent>
@@ -279,7 +413,9 @@ const Assignments = () => {
                     <Card>
                       <CardHeader>
                         <CardTitle>Submission Status</CardTitle>
-                        <CardDescription>Your assignment has been submitted</CardDescription>
+                        <CardDescription>
+                          Your assignment has been submitted
+                        </CardDescription>
                       </CardHeader>
                       <CardContent className="space-y-4">
                         <div className="bg-success/10 border border-success/20 rounded-lg p-4">
@@ -290,7 +426,8 @@ const Assignments = () => {
                         </div>
 
                         <p className="text-sm text-muted-foreground">
-                          Your assignment is being reviewed. You'll receive feedback and grade soon.
+                          Your assignment is being reviewed. You'll receive
+                          feedback and grade soon.
                         </p>
                       </CardContent>
                     </Card>

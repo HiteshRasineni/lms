@@ -1,5 +1,5 @@
 import express from "express";
-import { submitAssignment, getSubmissionsByAssignment, getSubmissionsByCourse, getMySubmissions } from "../controllers/submissionController.js";
+import { submitAssignment, getSubmissionsByAssignment, getSubmissionsByCourse, getMySubmissions, updateSubmission } from "../controllers/submissionController.js";
 import { protect } from "../middleware/authMiddleware.js";
 import upload from "../utils/fileUpload.js";
 
@@ -13,5 +13,8 @@ router.get("/my-submissions", protect, getMySubmissions);
 
 router.get("/assignment/:assignmentId", protect, getSubmissionsByAssignment);
 router.get("/course/:courseId", protect, getSubmissionsByCourse);
+
+// Update submission (for draft functionality)
+router.put("/:submissionId", protect, upload.single("file"), updateSubmission);
 
 export default router;

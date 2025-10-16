@@ -13,10 +13,10 @@ import path from "path";
  */
 export const submitAssignment = async (req, res, next) => {
   try {
-    const { assignmentId } = req.body;
-    if (!req.file) {
+    const { assignmentId, isDraft, comments } = req.body;
+    if (!req.file && !isDraft) {
       res.status(400);
-      throw new Error("PDF file is required");
+      throw new Error("PDF file is required for final submission");
     }
     // Check if it's a regular assignment or a topic assignment
     let assignment = await Assignment.findById(assignmentId);
@@ -29,7 +29,7 @@ export const submitAssignment = async (req, res, next) => {
       });
       
       if (!topic || topic.type !== "assignment") {
-        fs.unlinkSync(req.file.path);
+        if (req.file) fs.unlinkSync(req.file.path);
         res.status(404);
         throw new Error("Assignment not found");
       }
@@ -42,17 +42,19 @@ export const submitAssignment = async (req, res, next) => {
     // Optionally: check student enrolled
     const enrolled = await Enrollment.findOne({ course: courseId, student: req.user._id });
     if (!enrolled && req.user.role !== "Teacher") {
-      fs.unlinkSync(req.file.path);
+      if (req.file) fs.unlinkSync(req.file.path);
       res.status(403);
       throw new Error("You are not enrolled in this course");
     }
 
-    const fileUrl = req.file.path; // Cloudinary URL
+    const fileUrl = req.file ? req.file.path : null; // Cloudinary URL
     const submission = await Submission.create({
       assignment: assignmentId,
       student: req.user._id,
       fileUrl,
       plagiarismChecked: false,
+      isDraft: isDraft === "true" || isDraft === true,
+      comments: comments || "",
     });
 
     res.status(201).json(submission);
@@ -98,6 +100,38 @@ export const getSubmissionsByCourse = async (req, res, next) => {
       .populate("student", "name email")
       .populate("assignment", "title");
     res.json(submissions);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const updateSubmission = async (req, res, next) => {
+  try {
+    const { submissionId } = req.params;
+    const { isDraft, comments } = req.body;
+    
+    const submission = await Submission.findById(submissionId);
+    if (!submission) {
+      res.status(404);
+      throw new Error("Submission not found");
+    }
+
+    // Check if user owns this submission
+    if (submission.student.toString() !== req.user._id.toString()) {
+      res.status(403);
+      throw new Error("Not authorized to update this submission");
+    }
+
+    // Handle file upload if present
+    if (req.file) {
+      submission.fileUrl = req.file.path;
+    }
+
+    submission.isDraft = isDraft === "true" || isDraft === true;
+    if (comments !== undefined) submission.comments = comments;
+
+    await submission.save();
+    res.json(submission);
   } catch (err) {
     next(err);
   }

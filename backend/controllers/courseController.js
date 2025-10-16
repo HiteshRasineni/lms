@@ -110,11 +110,29 @@ export const getCourses = async (req, res, next) => {
 
     const courses = await Course.find(query).populate("teacher", "name email");
     
-    // Add enrolledCount for each course
+    // Add enrolledCount and reviews for each course
     const coursesWithCount = await Promise.all(
       courses.map(async (course) => {
         const count = await Enrollment.countDocuments({ course: course._id });
-        return { ...course.toObject(), enrolledCount: count };
+        
+        // Get reviews for this course
+        const Review = (await import("../models/Review.js")).default;
+        const reviews = await Review.find({ course: course._id })
+          .populate("student", "name email")
+          .sort({ createdAt: -1 });
+        
+        // Calculate average rating
+        const averageRating = reviews.length > 0 
+          ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length 
+          : 0;
+        
+        return { 
+          ...course.toObject(), 
+          enrolledCount: count,
+          reviews,
+          averageRating: Math.round(averageRating * 10) / 10,
+          reviewCount: reviews.length
+        };
       })
     );
     

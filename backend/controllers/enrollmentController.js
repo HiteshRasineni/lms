@@ -65,11 +65,35 @@ export const updateEnrollmentProgress = asyncHandler(async (req, res) => {
     enrollment.completedTopics.push(topicId);
   }
 
+  // Calculate progress percentage
+  const progress = await calculateCourseProgress(enrollment.course, enrollment.completedTopics);
+  enrollment.progress = progress;
+
   enrollment.lastAccessedAt = new Date();
   await enrollment.save();
 
   res.json(enrollment);
 });
+
+// Helper function to calculate course progress
+const calculateCourseProgress = async (courseId, completedTopics) => {
+  // Get all topics in the course
+  const CourseUnit = (await import("../models/CourseUnit.js")).default;
+  const Topic = (await import("../models/Topic.js")).default;
+  
+  const units = await CourseUnit.find({ course: courseId });
+  const unitIds = units.map(unit => unit._id);
+  const allTopics = await Topic.find({ unit: { $in: unitIds } });
+  
+  if (allTopics.length === 0) {
+    return 0;
+  }
+  
+  const completedCount = completedTopics.length;
+  const totalCount = allTopics.length;
+  
+  return Math.round((completedCount / totalCount) * 100);
+};
 
 // @desc    Get students in a course
 // @route   GET /api/enrollments/course/:courseId/students
