@@ -1,21 +1,21 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Users, BookOpen, FileText, CheckCircle, Plus, Loader2 } from "lucide-react";
 import { CreateCourseModal } from "@/components/teacher/CreateCourseModal";
-import { ManageCourseModal } from "@/components/teacher/ManageCourseModal";
 import { getTeacherCourses } from "@/lib/apiService";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 
 const TeacherDashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [myCourses, setMyCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [manageCourse, setManageCourse] = useState<{ id: string; name: string } | null>(null);
   const [stats, setStats] = useState({
     activeCourses: 0,
     totalStudents: 0,
@@ -174,12 +174,11 @@ const TeacherDashboard = () => {
                       <Button 
                         size="sm" 
                         variant="outline"
-                        onClick={() => setManageCourse({ id: course._id, name: course.title })}
+                        onClick={() => navigate(`/teacher/courses/${course._id}`)}
                         data-testid={`manage-course-btn-${course._id}`}
                       >
                         Manage Course
-                      </Button>
-                      <Button size="sm" variant="outline">View Analytics</Button>                    
+                      </Button>                    
                     </div>
                   </div>
                 ))}
@@ -194,15 +193,6 @@ const TeacherDashboard = () => {
         onOpenChange={setShowCreateModal}
         onCourseCreated={loadDashboardData}
       />
-
-      {manageCourse && (
-        <ManageCourseModal
-          open={true}
-          onOpenChange={(open) => !open && setManageCourse(null)}
-          courseId={manageCourse.id}
-          courseName={manageCourse.name}
-        />
-      )}
     </DashboardLayout>
   );
 };

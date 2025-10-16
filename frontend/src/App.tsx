@@ -15,6 +15,7 @@ import TeacherDashboard from "./pages/TeacherDashboard";
 import CourseList from "./pages/CourseList";
 import ExploreCourses from "./pages/ExploreCourses";
 import StudentCourseDetail from "./pages/StudentCourseDetail";
+import TeacherCourseDetail from "./pages/TeacherCourseDetail";
 import Assignments from "./pages/Assignments";
 import Grades from "./pages/Grades";
 import Forum from "./pages/Forum";
@@ -80,6 +81,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <StudentCourseDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/teacher/courses/:courseId"
+            element={
+              <ProtectedRoute requiredRole="Teacher">
+                <TeacherCourseDetail />
               </ProtectedRoute>
             }
           />

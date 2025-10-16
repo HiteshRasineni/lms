@@ -64,14 +64,21 @@ export const createTopic = asyncHandler(async (req, res) => {
     throw new Error("Not authorized");
   }
 
-  const topic = await Topic.create({
+  const topicData = {
     unit: req.params.unitId,
     title,
     type,
     contentUrl,
     description,
     order,
-  });
+  };
+
+// Handle file upload if present
+  if (req.file) {
+    topicData.contentUrl = req.file.path;
+  }
+
+  const topic = await Topic.create(topicData);
 
   res.status(201).json(topic);
 });
@@ -117,7 +124,14 @@ export const updateTopic = asyncHandler(async (req, res) => {
     throw new Error("Not authorized");
   }
 
-  const updatedTopic = await Topic.findByIdAndUpdate(req.params.topicId, req.body, { new: true });
+  const updateData = { ...req.body };
+  
+  // Handle file upload if present
+  if (req.file) {
+    updateData.contentUrl = req.file.path;
+  }
+
+  const updatedTopic = await Topic.findByIdAndUpdate(req.params.topicId, updateData, { new: true });
   res.json(updatedTopic);
 });
 

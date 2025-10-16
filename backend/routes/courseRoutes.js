@@ -48,4 +48,8 @@ router.delete("/units/:unitId", protect, deleteUnit);
 router.get("/units/:unitId/topics", protect, getUnitTopics);
 router.post("/units/:unitId/topics", protect, uploadCourseMaterial.single('content'), createTopic);
 
+// Topics management
+router.put("/topics/:topicId", protect, uploadCourseMaterial.single('content'), updateTopic);
+router.delete("/topics/:topicId", protect, deleteTopic);
+
 export default router;

@@ -11,11 +11,12 @@ import { getCourseUnits, createUnit, createTopic, deleteUnit, deleteTopic } from
 
 interface CourseContentProps {
   courseId: string;
+  units: any[];
+  onRefresh: () => void;
 }
-
-export const CourseContent = ({ courseId }: CourseContentProps) => {
-  const [units, setUnits] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+export const CourseContent = ({ courseId, units: initialUnits, onRefresh }: CourseContentProps) => {
+  const [units, setUnits] = useState<any[]>(initialUnits);
+  const [loading, setLoading] = useState(false);
   const [showNewUnit, setShowNewUnit] = useState(false);
   const [showNewTopic, setShowNewTopic] = useState<string | null>(null);
   const [newUnitTitle, setNewUnitTitle] = useState("");
@@ -30,8 +31,8 @@ export const CourseContent = ({ courseId }: CourseContentProps) => {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    loadUnits();
-  }, [courseId]);
+    setUnits(initialUnits);
+  }, [initialUnits]);
 
   const loadUnits = async () => {
     try {
@@ -77,7 +78,7 @@ export const CourseContent = ({ courseId }: CourseContentProps) => {
       setNewUnitTitle("");
       setNewUnitDesc("");
       setShowNewUnit(false);
-      loadUnits();
+      onRefresh();
     } catch (error: any) {
       toast({
         title: "Error",
@@ -117,7 +118,7 @@ export const CourseContent = ({ courseId }: CourseContentProps) => {
       setNewTopic({ title: "", type: "video", description: "", contentUrl: "" });
       setTopicFile(null);
       setShowNewTopic(null);
-      loadUnits();
+      onRefresh();
     } catch (error: any) {
       toast({
         title: "Error",
@@ -135,7 +136,7 @@ export const CourseContent = ({ courseId }: CourseContentProps) => {
     try {
       await deleteUnit(unitId);
       toast({ title: "Success", description: "Unit deleted successfully" });
-      loadUnits();
+      onRefresh();
     } catch (error: any) {
       toast({
         title: "Error",
@@ -151,7 +152,7 @@ export const CourseContent = ({ courseId }: CourseContentProps) => {
     try {
       await deleteTopic(topicId);
       toast({ title: "Success", description: "Topic deleted successfully" });
-      loadUnits();
+      onRefresh();
     } catch (error: any) {
       toast({
         title: "Error",
