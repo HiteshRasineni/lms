@@ -9,39 +9,18 @@ export const gradeSubmission = async (req, res, next) => {
   try {
     const { submissionId } = req.params;
     const { grade, feedback } = req.body;
-    console.log(`[Grade Submission] Request for submission: ${submissionId}`);
-    console.log(`[Grade Submission] Grade: ${grade}, Feedback: ${feedback}`);
-    
-    // Validate input
-    if (grade === undefined || grade === null) {
-      res.status(400);
-      throw new Error("Grade is required");
-    }
-    
-    if (grade < 0 || grade > 100) {
-      res.status(400);
-      throw new Error("Grade must be between 0 and 100");
-    }
     const submission = await Submission.findById(submissionId)
       .populate("assignment")
       .populate("student");
       
     if (!submission) {
-      console.log(`[Grade Submission] Submission not found: ${submissionId}`);
       res.status(404);
       throw new Error("Submission not found");
     }
-    console.log(`[Grade Submission] Found submission for student: ${submission.student.name}`);
 
     // Verify teacher owns the course
     const assignment = await Assignment.findById(submission.assignment._id).populate("course");
-    if (!assignment || !assignment.course) {
-      console.log(`[Grade Submission] Assignment or course not found`);
-      res.status(404);
-      throw new Error("Assignment not found");
-    }
     if (assignment.course.teacher.toString() !== req.user._id.toString()) {
-      console.log(`[Grade Submission] Authorization failed. Teacher: ${assignment.course.teacher}, User: ${req.user._id}`);
       res.status(403);
       throw new Error("Not authorized to grade this submission");
     }
@@ -51,17 +30,13 @@ export const gradeSubmission = async (req, res, next) => {
     
     if (gradeDoc) {
       // Update existing grade
-      console.log(`[Grade Submission] Updating existing grade: ${gradeDoc._id}`);
       gradeDoc.grade = grade;
       gradeDoc.feedback = feedback;
       await gradeDoc.save();
     } else {
       // Create new grade
-      console.log(`[Grade Submission] Creating new grade`);
       gradeDoc = await Grade.create({
         submission: submissionId,
-        assignment: submission.assignment._id,
-        student: submission.student._id,
         grade,
         feedback,
       });
@@ -70,13 +45,10 @@ export const gradeSubmission = async (req, res, next) => {
       await User.findByIdAndUpdate(submission.student._id, {
         $inc: { xp: assignment.xpReward || 50 }
       });
-      console.log(`[Grade Submission] Awarded ${assignment.xpReward || 50} XP to student`);
     }
-    console.log(`[Grade Submission] Successfully graded submission`);
 
     res.status(201).json(gradeDoc);
   } catch (err) {
-    console.error(`[Grade Submission] Error:`, err);
     next(err);
   }
 };

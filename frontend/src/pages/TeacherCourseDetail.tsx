@@ -22,7 +22,6 @@ import { getCourseById, updateCourse } from "@/lib/apiService";
 import { toast } from "@/hooks/use-toast";
 import { CourseContent } from "@/components/teacher/CourseContent";
 import { CourseStudents } from "@/components/teacher/CourseStudents";
-import { CourseAssignments } from "@/components/teacher/CourseAssignments";
 import { CourseAnnouncements } from "@/components/teacher/CourseAnnouncements";
 import { CourseDiscussion } from "@/components/teacher/CourseDiscussion";
 import { CourseLeaderboard } from "@/components/teacher/CourseLeaderboard";
@@ -226,7 +225,12 @@ const TeacherCourseDetail = () => {
           </TabsContent>
 
           <TabsContent value="assignments">
-            <CourseAssignments courseId={courseId!} />
+            <Card>
+              <CardContent className="pt-6 text-center text-muted-foreground">
+                Assignments management will be integrated here. Use the
+                Assignments page for now.
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="discussion">
