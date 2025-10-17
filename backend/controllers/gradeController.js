@@ -18,8 +18,20 @@ export const gradeSubmission = async (req, res, next) => {
       throw new Error("Submission not found");
     }
 
+     const assignmentId = submission.assignment?._id || submission.assignment;
+    const studentId = submission.student?._id || submission.student;
+
+    if (!assignmentId || !studentId) {
+      res.status(400);
+      throw new Error("Submission is missing assignment or student reference");
+    }
+
     // Verify teacher owns the course
-    const assignment = await Assignment.findById(submission.assignment._id).populate("course");
+    const assignment = await Assignment.findById(assignmentId).populate("course");
+    if (!assignment) {
+      res.status(404);
+      throw new Error("Assignment not found");
+    }
     if (assignment.course.teacher.toString() !== req.user._id.toString()) {
       res.status(403);
       throw new Error("Not authorized to grade this submission");
@@ -32,17 +44,20 @@ export const gradeSubmission = async (req, res, next) => {
       // Update existing grade
       gradeDoc.grade = grade;
       gradeDoc.feedback = feedback;
+      
       await gradeDoc.save();
     } else {
       // Create new grade
       gradeDoc = await Grade.create({
         submission: submissionId,
+        assignment: assignmentId,
+        student: studentId,
         grade,
         feedback,
       });
       
       // Award XP for completing assignment
-      await User.findByIdAndUpdate(submission.student._id, {
+      await User.findByIdAndUpdate(studentId, {
         $inc: { xp: assignment.xpReward || 50 }
       });
     }
@@ -65,6 +80,7 @@ export const getGradesForStudent = async (req, res, next) => {
       });
     
     const submissionIds = submissions.map(s => s._id);
+    
     
     // Find grades for those submissions
     const grades = await Grade.find({ submission: { $in: submissionIds } })
