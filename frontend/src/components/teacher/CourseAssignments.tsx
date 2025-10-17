@@ -163,6 +163,16 @@ export const CourseAssignments = ({ courseId }: CourseAssignmentsProps) => {
   const handleGradeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Safety: ensure we have a selected submission with a valid id
+    if (!selectedSubmission || !selectedSubmission._id) {
+      toast({
+        title: "Error",
+        description: "No submission selected to grade",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (
       !gradeData.grade ||
       parseFloat(gradeData.grade) < 0 ||
@@ -178,7 +188,7 @@ export const CourseAssignments = ({ courseId }: CourseAssignmentsProps) => {
 
     try {
       setGrading(true);
-      await apiClient.post(`/grades/submission/${selectedSubmission?._id}`, {
+      await apiClient.post(`/grades/submission/${selectedSubmission._id}`, {
         grade: parseFloat(gradeData.grade),
         feedback: gradeData.feedback,
       });
