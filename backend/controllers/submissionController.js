@@ -19,6 +19,8 @@ export const submitAssignment = async (req, res, next) => {
     // Check if it's a regular assignment or a topic assignment
     let assignment = await Assignment.findById(assignmentId);
     let courseId;
+    let assignmentModel = "Assignment";
+    
     if (!assignment) {
       // Try to find it as a topic
       const topic = await Topic.findById(assignmentId).populate({
@@ -33,6 +35,7 @@ export const submitAssignment = async (req, res, next) => {
       }
       
       courseId = topic.unit.course._id;
+      assignmentModel = "Topic";
     } else {
       courseId = assignment.course;
     }
@@ -48,6 +51,7 @@ export const submitAssignment = async (req, res, next) => {
     const fileUrl = req.file ? req.file.path : null; // Cloudinary URL
     const submission = await Submission.create({
       assignment: assignmentId,
+      assignmentModel: assignmentModel,
       student: req.user._id,
       fileUrl,
       isDraft: isDraft === "true" || isDraft === true,

@@ -27,14 +27,13 @@ export const gradeSubmission = async (req, res, next) => {
       throw new Error("Submission is missing assignment or student reference");
     }
 
-    // Check if it's a regular Assignment or Topic-based assignment
-    let assignment = await Assignment.findById(assignmentId).populate("course");
+    // Check if it's a regular Assignment or Topic-based assignment based on assignmentModel
     let courseObj;
     let xpReward = 50; // default XP
     let maxPoints = 100; // default max points
     
-    if (!assignment) {
-      // Try to find it as a Topic (assignment-type)
+    if (submission.assignmentModel === "Topic") {
+      // It's a Topic-based assignment
       const topic = await Topic.findById(assignmentId).populate({
         path: "unit",
         populate: { path: "course" }
@@ -50,7 +49,14 @@ export const gradeSubmission = async (req, res, next) => {
       maxPoints = topic.maxPoints || 100;
       xpReward = 50; // Topics don't have xpReward field, use default
     } else {
-      // Regular assignment
+      // Regular Assignment
+      const assignment = await Assignment.findById(assignmentId).populate("course");
+      
+      if (!assignment) {
+        res.status(404);
+        throw new Error("Assignment not found");
+      }
+      
       courseObj = assignment.course;
       maxPoints = assignment.maxPoints || 100;
       xpReward = assignment.xpReward || 50;
