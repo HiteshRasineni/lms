@@ -3,6 +3,8 @@ import Submission from "../models/Submission.js";
 import Assignment from "../models/Assignment.js";
 import User from "../models/User.js";
 import Course from "../models/Course.js";
+import Topic from "../models/Topic.js";
+import CourseUnit from "../models/CourseUnit.js";
 
 export const gradeSubmission = async (req, res, next) => {
   try {
@@ -10,14 +12,14 @@ export const gradeSubmission = async (req, res, next) => {
     const { grade, feedback } = req.body;
     const submission = await Submission.findById(submissionId)
       .populate("assignment")
-      .populate("student");
+      .populate("student", "name email xp role avatar");
       
     if (!submission) {
       res.status(404);
       throw new Error("Submission not found");
     }
 
-     const assignmentId = submission.assignment?._id || submission.assignment;
+    const assignmentId = submission.assignment?._id || submission.assignment;
     const studentId = submission.student?._id || submission.student;
 
     if (!assignmentId || !studentId) {
@@ -25,13 +27,37 @@ export const gradeSubmission = async (req, res, next) => {
       throw new Error("Submission is missing assignment or student reference");
     }
 
-    // Verify teacher owns the course
-    const assignment = await Assignment.findById(assignmentId).populate("course");
+    // Check if it's a regular Assignment or Topic-based assignment
+    let assignment = await Assignment.findById(assignmentId).populate("course");
+    let courseObj;
+    let xpReward = 50; // default XP
+    let maxPoints = 100; // default max points
+    
     if (!assignment) {
-      res.status(404);
-      throw new Error("Assignment not found");
+      // Try to find it as a Topic (assignment-type)
+      const topic = await Topic.findById(assignmentId).populate({
+        path: "unit",
+        populate: { path: "course" }
+      });
+      
+      if (!topic || topic.type !== "assignment") {
+        res.status(404);
+        throw new Error("Assignment not found");
+      }
+      
+      // Use topic as assignment
+      courseObj = topic.unit.course;
+      maxPoints = topic.maxPoints || 100;
+      xpReward = 50; // Topics don't have xpReward field, use default
+    } else {
+      // Regular assignment
+      courseObj = assignment.course;
+      maxPoints = assignment.maxPoints || 100;
+      xpReward = assignment.xpReward || 50;
     }
-    if (assignment.course.teacher.toString() !== req.user._id.toString()) {
+
+    // Verify teacher owns the course
+    if (courseObj.teacher.toString() !== req.user._id.toString()) {
       res.status(403);
       throw new Error("Not authorized to grade this submission");
     }
@@ -53,11 +79,12 @@ export const gradeSubmission = async (req, res, next) => {
         student: studentId,
         grade,
         feedback,
+        xpAwarded: xpReward,
       });
       
-      // Award XP for completing assignment
+      // Award XP for completing assignment (only on first grading)
       await User.findByIdAndUpdate(studentId, {
-        $inc: { xp: assignment.xpReward || 50 }
+        $inc: { xp: xpReward }
       });
     }
 
@@ -102,12 +129,24 @@ export const getGradesByCourse = async (req, res, next) => {
   try {
     const { courseId } = req.params;
     
-    // Get all assignments for the course
+    // Get all regular assignments for the course
     const assignments = await Assignment.find({ course: courseId });
     const assignmentIds = assignments.map(a => a._id);
     
+    // Get topic-based assignments for the course
+    const units = await CourseUnit.find({ course: courseId });
+    const unitIds = units.map(u => u._id);
+    const topicAssignments = await Topic.find({ 
+      unit: { $in: unitIds },
+      type: "assignment"
+    });
+    const topicAssignmentIds = topicAssignments.map(t => t._id);
+    
+    // Combine all assignment IDs
+    const allAssignmentIds = [...assignmentIds, ...topicAssignmentIds];
+    
     // Get all submissions for those assignments
-    const submissions = await Submission.find({ assignment: { $in: assignmentIds } })
+    const submissions = await Submission.find({ assignment: { $in: allAssignmentIds } })
       .populate("student", "name email")
       .populate("assignment", "title maxPoints");
     
@@ -136,12 +175,24 @@ export const getPendingGrades = async (req, res, next) => {
     const courses = await Course.find({ teacher: req.user._id });
     const courseIds = courses.map(c => c._id);
     
-    // Get all assignments for those courses
+    // Get all regular assignments for those courses
     const assignments = await Assignment.find({ course: { $in: courseIds } });
     const assignmentIds = assignments.map(a => a._id);
     
+    // Get topic-based assignments for those courses
+    const units = await CourseUnit.find({ course: { $in: courseIds } });
+    const unitIds = units.map(u => u._id);
+    const topicAssignments = await Topic.find({ 
+      unit: { $in: unitIds },
+      type: "assignment"
+    });
+    const topicAssignmentIds = topicAssignments.map(t => t._id);
+    
+    // Combine all assignment IDs
+    const allAssignmentIds = [...assignmentIds, ...topicAssignmentIds];
+    
     // Get all submissions
-    const submissions = await Submission.find({ assignment: { $in: assignmentIds } })
+    const submissions = await Submission.find({ assignment: { $in: allAssignmentIds } })
       .populate("student", "name email")
       .populate("assignment", "title course")
       .populate({
