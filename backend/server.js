@@ -17,6 +17,8 @@ import announcementRoutes from "./routes/announcementRoutes.js";
 import forumRoutes from "./routes/forumRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
 import enrollmentRoutes from "./routes/enrollmentRoutes.js";
+import codeRoutes from "./routes/codeRoutes.js";
+import codePracticeRoutes from "./routes/codePracticeRoutes.js";
 import { errorHandler } from "./middleware/errorMiddleware.js";
 
 dotenv.config();
@@ -54,6 +56,8 @@ app.use("/api/announcements", announcementRoutes);
 app.use("/api/forum", forumRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/enrollments", enrollmentRoutes);
+app.use("/api/code", codeRoutes);
+app.use("/api/code-practice", codePracticeRoutes);
 
 // Error handler
 app.use(errorHandler);
