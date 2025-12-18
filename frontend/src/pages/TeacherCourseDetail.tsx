@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
+import { CourseAssignments } from "@/components/teacher/CourseAssignments";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -225,12 +226,7 @@ const TeacherCourseDetail = () => {
           </TabsContent>
 
           <TabsContent value="assignments">
-            <Card>
-              <CardContent className="pt-6 text-center text-muted-foreground">
-                Assignments management will be integrated here. Use the
-                Assignments page for now.
-              </CardContent>
-            </Card>
+            <CourseAssignments courseId={courseId!} />
           </TabsContent>
 
           <TabsContent value="discussion">

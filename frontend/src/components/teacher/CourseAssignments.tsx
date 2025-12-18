@@ -305,37 +305,6 @@ export const CourseAssignments = ({ courseId }: CourseAssignmentsProps) => {
                       </p>
                     )}
 
-                    {assignmentSubmissions.length > 0 && (
-                      <div className="flex gap-2 mb-4">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleCheckPlagiarism(assignment._id)}
-                          disabled={checkingPlagiarism}
-                        >
-                          {checkingPlagiarism ? (
-                            <>
-                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                              Checking...
-                            </>
-                          ) : (
-                            <>
-                              <Shield className="h-4 w-4 mr-2" />
-                              Run Plagiarism Check
-                            </>
-                          )}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() =>
-                            handleViewPlagiarismReports(assignment._id)
-                          }
-                        >
-                          View Plagiarism Reports
-                        </Button>
-                      </div>
-                    )}
 
                     {assignmentSubmissions.length === 0 ? (
                       <div className="text-center py-8 text-muted-foreground">
