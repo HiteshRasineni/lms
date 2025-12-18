@@ -375,16 +375,5 @@ export const getCourseGrades = async (courseId: string) => {
   const response = await apiClient.get(`/grades/course/${courseId}`);
   return response.data;
 };
-// ====================
-// PLAGIARISM
-// ====================
-export const checkPlagiarism = async (assignmentId: string) => {
-  const response = await apiClient.post(`/plagiarism/check/${assignmentId}`);
-  return response.data;
-};
 
-export const getPlagiarismReports = async (assignmentId: string) => {
-  const response = await apiClient.get(`/plagiarism/${assignmentId}`);
-  return response.data;
-};
 export default apiClient;

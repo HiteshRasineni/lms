@@ -40,10 +40,8 @@ services:
       CLOUDINARY_API_SECRET: your-cloudinary-api-secret
       GOOGLE_CLIENT_ID: your-google-client-id
       GOOGLE_CLIENT_SECRET: your-google-client-secret
-      ML_SERVICE_URL: http://ml-service:8000
     depends_on:
       - mongodb
-      - ml-service
     networks:
       - lms-network
     restart: always
@@ -62,22 +60,6 @@ services:
       VITE_API_URL: http://localhost:5000/api
     depends_on:
       - backend
-    networks:
-      - lms-network
-    restart: always
-
-  # -------------------------------------
-  # ML Plagiarism Service (FastAPI)
-  # -------------------------------------
-  ml-service:
-    build:
-      context: ./ml-service
-      dockerfile: Dockerfile
-    container_name: lms-ml-service
-    ports:
-      - "8000:8000"
-    environment:
-      PYTHONPATH: /app
     networks:
       - lms-network
     restart: always

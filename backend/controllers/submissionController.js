@@ -2,8 +2,6 @@ import Submission from "../models/Submission.js";
 import Assignment from "../models/Assignment.js";
 import Enrollment from "../models/Enrollment.js";
 import Topic from "../models/Topic.js";
-import { checkPlagiarism } from "../utils/plagiarismClient.js";
-import PlagiarismReport from "../models/PlagiarismReport.js";
 import fs from "fs";
 import path from "path";
 
@@ -52,7 +50,6 @@ export const submitAssignment = async (req, res, next) => {
       assignment: assignmentId,
       student: req.user._id,
       fileUrl,
-      plagiarismChecked: false,
       isDraft: isDraft === "true" || isDraft === true,
       comments: comments || "",
     });

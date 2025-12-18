@@ -3,7 +3,6 @@ import Submission from "../models/Submission.js";
 import Assignment from "../models/Assignment.js";
 import User from "../models/User.js";
 import Course from "../models/Course.js";
-import PlagiarismReport from "../models/PlagiarismReport.js";
 
 export const gradeSubmission = async (req, res, next) => {
   try {
@@ -18,8 +17,20 @@ export const gradeSubmission = async (req, res, next) => {
       throw new Error("Submission not found");
     }
 
+     const assignmentId = submission.assignment?._id || submission.assignment;
+    const studentId = submission.student?._id || submission.student;
+
+    if (!assignmentId || !studentId) {
+      res.status(400);
+      throw new Error("Submission is missing assignment or student reference");
+    }
+
     // Verify teacher owns the course
-    const assignment = await Assignment.findById(submission.assignment._id).populate("course");
+    const assignment = await Assignment.findById(assignmentId).populate("course");
+    if (!assignment) {
+      res.status(404);
+      throw new Error("Assignment not found");
+    }
     if (assignment.course.teacher.toString() !== req.user._id.toString()) {
       res.status(403);
       throw new Error("Not authorized to grade this submission");
@@ -32,17 +43,20 @@ export const gradeSubmission = async (req, res, next) => {
       // Update existing grade
       gradeDoc.grade = grade;
       gradeDoc.feedback = feedback;
+      
       await gradeDoc.save();
     } else {
       // Create new grade
       gradeDoc = await Grade.create({
         submission: submissionId,
+        assignment: assignmentId,
+        student: studentId,
         grade,
         feedback,
       });
       
       // Award XP for completing assignment
-      await User.findByIdAndUpdate(submission.student._id, {
+      await User.findByIdAndUpdate(studentId, {
         $inc: { xp: assignment.xpReward || 50 }
       });
     }
@@ -65,6 +79,7 @@ export const getGradesForStudent = async (req, res, next) => {
       });
     
     const submissionIds = submissions.map(s => s._id);
+    
     
     // Find grades for those submissions
     const grades = await Grade.find({ submission: { $in: submissionIds } })
@@ -139,36 +154,10 @@ export const getPendingGrades = async (req, res, next) => {
     // Find grades that exist
     const existingGrades = await Grade.find({ submission: { $in: submissionIds } });
     const gradedSubmissionIds = existingGrades.map(g => g.submission.toString());
-
-    // Find plagiarism reports
-    const plagiarismReports = await PlagiarismReport.find({ 
-      submission: { $in: submissionIds } 
-    });
     
-    // Create a map of submission IDs to plagiarism data
-    const plagiarismMap = {};
-    for (const report of plagiarismReports) {
-      if (!plagiarismMap[report.submission.toString()]) {
-        plagiarismMap[report.submission.toString()] = {
-          hasPlagiarism: report.similarity > 30,
-          maxSimilarity: report.similarity
-        };
-      } else {
-        if (report.similarity > plagiarismMap[report.submission.toString()].maxSimilarity) {
-          plagiarismMap[report.submission.toString()].maxSimilarity = report.similarity;
-          plagiarismMap[report.submission.toString()].hasPlagiarism = report.similarity > 30;
-        }
-      }
-    }
-    
-    // Filter out submissions that already have grades and add plagiarism info
+    // Filter out submissions that already have grades
     const pendingSubmissions = submissions
-      .filter(s => !gradedSubmissionIds.includes(s._id.toString()))
-      .map(s => ({
-        ...s.toObject(),
-        plagiarismChecked: s.plagiarismChecked || false,
-        plagiarismData: plagiarismMap[s._id.toString()] || null
-      }));
+      .filter(s => !gradedSubmissionIds.includes(s._id.toString()));
 
     res.json(pendingSubmissions);
   } catch (err) {

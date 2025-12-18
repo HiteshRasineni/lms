@@ -40,13 +40,11 @@ services:
       CLOUDINARY_API_SECRET: your-cloudinary-api-secret
       GOOGLE_CLIENT_ID: your-google-client-id
       GOOGLE_CLIENT_SECRET: your-google-client-secret
-      ML_SERVICE_URL: http://ml-service:8000
     volumes:
       - ./backend:/app
       - /app/node_modules
     depends_on:
       - mongodb
-      - ml-service
     networks:
       - lms-network
     restart: always
@@ -73,25 +71,6 @@ services:
       - lms-network
     restart: always
     command: npm run dev -- --host 0.0.0.0
-
-  # -------------------------------------
-  # ML Plagiarism Service (FastAPI) - Development
-  # -------------------------------------
-  ml-service:
-    build:
-      context: ./ml-service
-      dockerfile: Dockerfile.dev
-    container_name: lms-ml-service-dev
-    ports:
-      - "8000:8000"
-    environment:
-      PYTHONPATH: /app
-    volumes:
-      - ./ml-service:/app
-    networks:
-      - lms-network
-    restart: always
-    command: uvicorn app:app --host 0.0.0.0 --port 8000 --reload
 
 # -------------------------------------
 # Volumes
