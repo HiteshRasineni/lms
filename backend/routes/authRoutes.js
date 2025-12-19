@@ -47,8 +47,9 @@ router.get(
     const role = req.user.role;
     const selectedRole = req.session?.selectedRole || "student";
 
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
     res.redirect(
-      `http://localhost:5173/auth/callback?token=${token}&role=${role}&selectedRole=${selectedRole}`
+      `${frontendUrl}/auth/callback?token=${token}&role=${role}&selectedRole=${selectedRole}`
     );
   }
 );
