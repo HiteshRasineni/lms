@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef } from "react";
 import {
   Select,
   SelectContent,
@@ -9,7 +9,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Copy, Download, Upload, Play } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import Editor from "@monaco-editor/react";
+import Editor, { loader } from "@monaco-editor/react";
+import * as monaco from "monaco-editor";
+
+// Configure Monaco Editor loader
+loader.config({ monaco });
 
 interface MonacoCodeEditorProps {
   value: string;
@@ -142,17 +146,26 @@ export const MonacoCodeEditor = ({
       base: "vs-dark",
       inherit: true,
       rules: [
-        { token: "comment", foreground: "6A9955" },
-        { token: "keyword", foreground: "569CD6" },
+        { token: "comment", foreground: "6A9955", fontStyle: "italic" },
+        { token: "keyword", foreground: "569CD6", fontStyle: "bold" },
         { token: "string", foreground: "CE9178" },
         { token: "number", foreground: "B5CEA8" },
+        { token: "type", foreground: "4EC9B0" },
+        { token: "class", foreground: "4EC9B0" },
+        { token: "function", foreground: "DCDCAA" },
+        { token: "variable", foreground: "9CDCFE" },
+        { token: "operator", foreground: "D4D4D4" },
       ],
       colors: {
         "editor.background": "#1a1a1a",
         "editor.foreground": "#d4d4d4",
         "editorLineNumber.foreground": "#858585",
+        "editorLineNumber.activeForeground": "#c6c6c6",
         "editor.selectionBackground": "#264f78",
         "editor.inactiveSelectionBackground": "#3a3d41",
+        "editor.lineHighlightBackground": "#2a2a2a",
+        "editorCursor.foreground": "#ffffff",
+        "editorWhitespace.foreground": "#404040",
       },
     });
 
@@ -227,15 +240,21 @@ export const MonacoCodeEditor = ({
             mouseWheelZoom: true,
             smoothScrolling: true,
             cursorBlinking: "blink",
-            cursorSmoothCaretAnimation: true,
+            cursorSmoothCaretAnimation: "on",
             selectOnLineNumbers: true,
             roundedSelection: false,
             readOnly: false,
             cursorStyle: "line",
-            automaticLayout: true,
+            bracketPairColorization: {
+              enabled: true,
+            },
+            suggest: {
+              showKeywords: true,
+              showSnippets: true,
+            },
           }}
           loading={
-            <div className="flex items-center justify-center h-[400px] bg-gray-900 text-gray-400">
+            <div className="flex items-center justify-center h-[400px] bg-[#1a1a1a] text-gray-400">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
                 <p>Loading Monaco Editor...</p>
@@ -261,4 +280,3 @@ export const getJudge0LanguageId = (language: string): number => {
   const langConfig = languages.find((l) => l.value === language);
   return langConfig?.judge0Id || 63; // Default to JavaScript
 };
-

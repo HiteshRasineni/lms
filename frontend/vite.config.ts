@@ -15,4 +15,22 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  optimizeDeps: {
+    include: ['monaco-editor'],
+    esbuildOptions: {
+      target: 'esnext',
+    }
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'monaco-editor': ['monaco-editor'],
+        }
+      }
+    }
+  },
+  worker: {
+    format: 'es'
+  }
 }));
