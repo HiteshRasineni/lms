@@ -8,8 +8,11 @@ import {
   resendVerification,
   updateProfile,
   updateNotificationSettings,
+  changePassword,
+  uploadProfilePhoto,
 } from "../controllers/authController.js";
 import { protect } from "../middleware/authMiddleware.js";
+import upload from "../utils/fileUpload.js";
 
 const router = express.Router();
 
@@ -19,6 +22,8 @@ router.post("/login", login);
 router.get("/profile", protect, getProfile);
 router.put("/profile", protect, updateProfile);
 router.put("/notifications", protect, updateNotificationSettings);
+router.put("/change-password", protect, changePassword);
+router.put("/upload-photo", protect, upload.single('profilePicture'), uploadProfilePhoto);
 
 // Email verification
 router.get("/verify-email", verifyEmail);

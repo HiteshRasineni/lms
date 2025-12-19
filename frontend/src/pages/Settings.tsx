@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import {
@@ -16,15 +16,23 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   User,
   Mail,
   Bell,
   Award,
   HelpCircle,
-  LogOut,
   Camera,
   Loader2,
   Trophy,
+  Lock,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
@@ -32,9 +40,11 @@ import { getMyRank } from "@/lib/apiService";
 import apiClient from "@/lib/apiService";
 
 const Settings = () => {
-  const { user, logout } = useAuth();
+  const { user, setUser } = useAuth();
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const currentSection = (searchParams.get("section") || "profile") as
     | "profile"
@@ -53,6 +63,12 @@ const Settings = () => {
     forumReplies: true,
     courseAnnouncements: true,
   });
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
 
   useEffect(() => {
     loadXpData();
@@ -70,7 +86,15 @@ const Settings = () => {
   const handleProfileUpdate = async () => {
     try {
       setLoading(true);
-      await apiClient.put("/api/auth/profile", profileData);
+      const response = await apiClient.put("/api/auth/profile", profileData);
+
+      // Update user context with new data
+      if (setUser && response.data) {
+        const updatedUser = { ...user, ...response.data };
+        setUser(updatedUser);
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+      }
+
       toast({
         title: "Success",
         description: "Profile updated successfully",
@@ -80,6 +104,130 @@ const Settings = () => {
         title: "Error",
         description:
           error.response?.data?.message || "Failed to update profile",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePhotoUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast({
+        title: "Error",
+        description: "Please select an image file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "Error",
+        description: "Image size must be less than 5MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setUploadingPhoto(true);
+      const formData = new FormData();
+      formData.append("profilePicture", file);
+
+      const response = await apiClient.put("/api/auth/upload-photo", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      // Update user context with new profile picture
+      if (setUser && response.data?.profilePicture) {
+        const updatedUser = {
+          ...user,
+          profilePicture: response.data.profilePicture,
+        };
+        setUser(updatedUser);
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+      }
+
+      toast({
+        title: "Success",
+        description: "Profile picture updated successfully",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to upload photo",
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
+  const handlePasswordChange = async () => {
+    // Validate passwords
+    if (
+      !passwordData.currentPassword ||
+      !passwordData.newPassword ||
+      !passwordData.confirmPassword
+    ) {
+      toast({
+        title: "Error",
+        description: "Please fill in all password fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast({
+        title: "Error",
+        description: "New passwords do not match",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (passwordData.newPassword.length < 6) {
+      toast({
+        title: "Error",
+        description: "Password must be at least 6 characters long",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await apiClient.put("/api/auth/change-password", {
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword,
+      });
+
+      toast({
+        title: "Success",
+        description: "Password changed successfully",
+      });
+
+      // Reset form and close dialog
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+      setShowPasswordDialog(false);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description:
+          error.response?.data?.message || "Failed to change password",
         variant: "destructive",
       });
     } finally {
@@ -104,11 +252,6 @@ const Settings = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
   };
 
   // Mock badges data
@@ -188,10 +331,12 @@ const Settings = () => {
               <Bell className="h-4 w-4" />
               Notifications
             </TabsTrigger>
-            <TabsTrigger value="badges" className="gap-2">
-              <Award className="h-4 w-4" />
-              Badges & XP
-            </TabsTrigger>
+            {user?.role !== "Teacher" && (
+              <TabsTrigger value="badges" className="gap-2">
+                <Award className="h-4 w-4" />
+                Badges & XP
+              </TabsTrigger>
+            )}
             <TabsTrigger value="help" className="gap-2">
               <HelpCircle className="h-4 w-4" />
               Help
@@ -217,9 +362,32 @@ const Settings = () => {
                     </AvatarFallback>
                   </Avatar>
                   <div className="space-y-2">
-                    <Button variant="outline" size="sm" className="gap-2">
-                      <Camera className="h-4 w-4" />
-                      Change Photo
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePhotoUpload}
+                      className="hidden"
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-2"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadingPhoto}
+                      data-testid="change-photo-btn"
+                    >
+                      {uploadingPhoto ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Uploading...
+                        </>
+                      ) : (
+                        <>
+                          <Camera className="h-4 w-4" />
+                          Change Photo
+                        </>
+                      )}
                     </Button>
                     <p className="text-xs text-muted-foreground">
                       JPG, PNG or GIF. Max 5MB.
@@ -283,25 +451,18 @@ const Settings = () => {
             {/* Account Actions */}
             <Card>
               <CardHeader>
-                <CardTitle>Account Actions</CardTitle>
-                <CardDescription>Manage your account</CardDescription>
+                <CardTitle>Security</CardTitle>
+                <CardDescription>Manage your account security</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 <Button
                   variant="outline"
                   className="w-full justify-start gap-2"
+                  onClick={() => setShowPasswordDialog(true)}
+                  data-testid="change-password-btn"
                 >
-                  <Mail className="h-4 w-4" />
+                  <Lock className="h-4 w-4" />
                   Change Password
-                </Button>
-                <Button
-                  variant="destructive"
-                  className="w-full justify-start gap-2"
-                  onClick={handleLogout}
-                  data-testid="logout-btn"
-                >
-                  <LogOut className="h-4 w-4" />
-                  Sign Out
                 </Button>
               </CardContent>
             </Card>
@@ -571,6 +732,94 @@ const Settings = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Password Change Dialog */}
+      <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
+        <DialogContent data-testid="change-password-dialog">
+          <DialogHeader>
+            <DialogTitle>Change Password</DialogTitle>
+            <DialogDescription>
+              Enter your current password and choose a new one
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="current-password">Current Password</Label>
+              <Input
+                id="current-password"
+                type="password"
+                value={passwordData.currentPassword}
+                onChange={(e) =>
+                  setPasswordData({
+                    ...passwordData,
+                    currentPassword: e.target.value,
+                  })
+                }
+                data-testid="current-password-input"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="new-password">New Password</Label>
+              <Input
+                id="new-password"
+                type="password"
+                value={passwordData.newPassword}
+                onChange={(e) =>
+                  setPasswordData({
+                    ...passwordData,
+                    newPassword: e.target.value,
+                  })
+                }
+                data-testid="new-password-input"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirm-password">Confirm New Password</Label>
+              <Input
+                id="confirm-password"
+                type="password"
+                value={passwordData.confirmPassword}
+                onChange={(e) =>
+                  setPasswordData({
+                    ...passwordData,
+                    confirmPassword: e.target.value,
+                  })
+                }
+                data-testid="confirm-password-input"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowPasswordDialog(false);
+                setPasswordData({
+                  currentPassword: "",
+                  newPassword: "",
+                  confirmPassword: "",
+                });
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handlePasswordChange}
+              disabled={loading}
+              data-testid="submit-password-change-btn"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Changing...
+                </>
+              ) : (
+                "Change Password"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };
