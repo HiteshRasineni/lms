@@ -1,6 +1,13 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { getMyGrades } from "@/lib/apiService";
@@ -26,18 +33,31 @@ export const StudentCourseGrades = ({ courseId }: StudentCourseGradesProps) => {
     try {
       setLoading(true);
       const allGrades = await getMyGrades(user!._id);
-      // Filter grades for this course
-      const courseGrades = allGrades.filter(
-        (g: any) => g.submission?.assignment?.course === courseId
-      );
+      // Filter grades for this course - check both _id and string representations
+      const courseGrades = allGrades.filter((g: any) => {
+        const assignmentCourse = g.submission?.assignment?.course;
+        if (!assignmentCourse) return false;
+        // Check if it's an object with _id or a string
+        const courseIdToMatch =
+          typeof assignmentCourse === "object"
+            ? assignmentCourse._id || assignmentCourse
+            : assignmentCourse;
+        return (
+          courseIdToMatch === courseId ||
+          courseIdToMatch?.toString() === courseId
+        );
+      });
       setGrades(courseGrades);
-      
+
       // Calculate average
       if (courseGrades.length > 0) {
-        const avg = courseGrades.reduce((sum: number, g: any) => sum + g.grade, 0) / courseGrades.length;
+        const avg =
+          courseGrades.reduce((sum: number, g: any) => sum + g.grade, 0) /
+          courseGrades.length;
         setAvgGrade(Math.round(avg * 10) / 10);
       }
     } catch (error: any) {
+      console.error("Error loading grades:", error);
       toast({
         title: "Error",
         description: error.response?.data?.message || "Failed to load grades",
@@ -89,12 +109,17 @@ export const StudentCourseGrades = ({ courseId }: StudentCourseGradesProps) => {
               </TableHeader>
               <TableBody>
                 {grades.map((grade) => (
-                  <TableRow key={grade._id} data-testid={`grade-row-${grade._id}`}>
+                  <TableRow
+                    key={grade._id}
+                    data-testid={`grade-row-${grade._id}`}
+                  >
                     <TableCell className="font-medium">
                       {grade.submission?.assignment?.title || "Assignment"}
                     </TableCell>
                     <TableCell>
-                      {new Date(grade.submission?.createdAt).toLocaleDateString()}
+                      {new Date(
+                        grade.submission?.createdAt
+                      ).toLocaleDateString()}
                     </TableCell>
                     <TableCell>
                       <span

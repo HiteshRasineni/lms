@@ -7,7 +7,7 @@ const storage = new CloudinaryStorage({
   params: {
     folder: 'lms_uploads',           // Folder name in your Cloudinary account
     resource_type: 'auto',           // Supports PDFs, images, etc.
-    allowed_formats: ['pdf', 'png', 'jpg', 'jpeg', 'docx', 'pptx'],
+    allowed_formats: ['pdf', 'png', 'jpg', 'jpeg', 'gif', 'webp', 'docx', 'pptx'],
   },
 });
 

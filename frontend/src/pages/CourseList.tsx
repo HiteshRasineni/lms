@@ -11,20 +11,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import {
-  BookOpen,
-  Clock,
-  Users,
-  Star,
-  Loader2,
-  Plus,
-  Award,
-} from "lucide-react";
-import {
-  getEnrolledCourses,
-  getTeacherCourses,
-  getMyGrades,
-} from "@/lib/apiService";
+import { BookOpen, Clock, Users, Star, Loader2, Plus } from "lucide-react";
+import { getEnrolledCourses, getTeacherCourses } from "@/lib/apiService";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 
@@ -32,7 +20,6 @@ const CourseList = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [courses, setCourses] = useState<any[]>([]);
-  const [grades, setGrades] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const isTeacher = user?.role === "Teacher";
 
@@ -48,44 +35,22 @@ const CourseList = () => {
         const data = await getTeacherCourses();
         setCourses(data);
       } else {
-        // For students, get enrolled courses and grades
-        const [coursesData, gradesData] = await Promise.all([
-          getEnrolledCourses(),
-          getMyGrades(user!._id),
-        ]);
+        // For students, get enrolled courses
+        const coursesData = await getEnrolledCourses();
         setCourses(coursesData);
-        setGrades(gradesData);
       }
     } catch (error: any) {
+      console.error("Error loading courses:", error);
       toast({
         title: "Error",
-        description: `Failed to load ${
-          isTeacher ? "teaching" : "enrolled"
-        } courses`,
+        description:
+          error.response?.data?.message ||
+          `Failed to load ${isTeacher ? "teaching" : "enrolled"} courses`,
         variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
-  };
-
-  // Calculate average grade for a course
-  const getCourseGrade = (courseId: string) => {
-    const courseGrades = grades.filter(
-      (g: any) =>
-        g.submission?.assignment?.course?._id === courseId ||
-        g.submission?.assignment?.course === courseId
-    );
-
-    if (courseGrades.length === 0) return null;
-
-    const avgGrade =
-      courseGrades.reduce((sum: number, g: any) => sum + g.grade, 0) /
-      courseGrades.length;
-    return {
-      average: Math.round(avgGrade * 10) / 10,
-      count: courseGrades.length,
-    };
   };
 
   const handleCourseClick = (courseId: string) => {
@@ -215,7 +180,6 @@ const CourseList = () => {
                 courses.map((enrollment) => {
                   const course = enrollment.course;
                   if (!course) return null;
-                  const gradeInfo = getCourseGrade(course._id);
                   return (
                     <Card
                       key={enrollment._id}
@@ -262,29 +226,6 @@ const CourseList = () => {
                             </div>
                           )}
                         </div>
-
-                        {/* Grade Display */}
-                        {gradeInfo && (
-                          <div className="p-3 bg-primary/5 border border-primary/10 rounded-lg">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <Award className="h-4 w-4 text-primary" />
-                                <span className="text-sm font-medium">
-                                  Average Grade
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <span className="text-lg font-bold text-primary">
-                                  {gradeInfo.average}%
-                                </span>
-                                <Badge variant="outline" className="text-xs">
-                                  {gradeInfo.count}{" "}
-                                  {gradeInfo.count === 1 ? "grade" : "grades"}
-                                </Badge>
-                              </div>
-                            </div>
-                          </div>
-                        )}
 
                         <div className="space-y-2">
                           <div className="flex justify-between text-sm">
