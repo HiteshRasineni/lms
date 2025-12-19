@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import connectDB from "./config/db.js";
 import passport from "./config/passport.js"; // passport strategies
-import session from "express-session"; 
+import session from "express-session";
 import authRoutes from "./routes/authRoutes.js";
 import courseRoutes from "./routes/courseRoutes.js";
 import assignmentRoutes from "./routes/assignmentRoutes.js";
@@ -24,8 +24,17 @@ import { errorHandler } from "./middleware/errorMiddleware.js";
 dotenv.config();
 const app = express();
 
-// CORS
-app.use(cors({ origin: "http://localhost:5173", credentials: true }));
+// CORS Configuration
+const allowedOrigins = [
+  "http://localhost:5173", // Local development
+  "http://localhost:3000", // Local development alternative
+  process.env.FRONTEND_URL, // Production frontend URL
+].filter(Boolean); // Remove undefined values
+
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true
+}));
 app.use(express.json());
 app.use("/uploads", express.static("uploads"));
 
@@ -41,6 +50,15 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 connectDB();
+
+// Health check endpoint
+app.get("/api/health", (req, res) => {
+  res.status(200).json({
+    status: "OK",
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV
+  });
+});
 
 // Routes
 app.use("/api/auth", authRoutes);
