@@ -115,32 +115,28 @@ export const CourseAssignments = ({ courseId }: CourseAssignmentsProps) => {
     try {
       const subs = await getSubmissionsByAssignment(assignmentId);
 
-      // Fetch grades for each submission
+      // Fetch grades for all submissions of this assignment
       const subsWithGrades = await Promise.all(
         subs.map(async (sub: Submission) => {
           try {
-            const gradeResponse = await apiClient.get(`/grades/pending`);
-            // We'll check if this submission has a grade by checking the pending list
-            const isPending = gradeResponse.data.some(
-              (p: any) => p._id === sub._id
+            // Fetch grades for this specific student
+            const studentGrades = await apiClient.get(
+              `/grades/student/${sub.student._id}`
             );
 
-            if (!isPending) {
-              // Try to fetch the grade
-              try {
-                const studentGrades = await apiClient.get(
-                  `/grades/student/${sub.student._id}`
-                );
-                const grade = studentGrades.data.find(
-                  (g: any) => g.submission._id === sub._id
-                );
-                return { ...sub, grade: grade || null };
-              } catch {
-                return { ...sub, grade: null };
-              }
-            }
-            return { ...sub, grade: null };
-          } catch {
+            // Find the grade for this specific submission
+            const grade = studentGrades.data.find(
+              (g: any) =>
+                g.submission?._id === sub._id || g.submission === sub._id
+            );
+
+            return { ...sub, grade: grade || null };
+          } catch (error) {
+            console.error(
+              "Failed to fetch grade for submission:",
+              sub._id,
+              error
+            );
             return { ...sub, grade: null };
           }
         })
@@ -304,7 +300,6 @@ export const CourseAssignments = ({ courseId }: CourseAssignmentsProps) => {
                         {assignment.description}
                       </p>
                     )}
-
 
                     {assignmentSubmissions.length === 0 ? (
                       <div className="text-center py-8 text-muted-foreground">

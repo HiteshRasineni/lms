@@ -104,28 +104,56 @@ export const getGradesForStudent = async (req, res, next) => {
   try {
     const { studentId } = req.params;
     
-    // Find all submissions by student
-    const submissions = await Submission.find({ student: studentId })
-      .populate({
-        path: "assignment",
-        populate: { path: "course", select: "title" }
-      });
-    
-    const submissionIds = submissions.map(s => s._id);
-    
-    
-    // Find grades for those submissions
-    const grades = await Grade.find({ submission: { $in: submissionIds } })
+    // Find all grades for student submissions
+    const grades = await Grade.find({ student: studentId })
       .populate({
         path: "submission",
         populate: {
-          path: "assignment",
-          populate: { path: "course", select: "title" }
+          path: "student",
+          select: "name email"
         }
       })
       .sort({ createdAt: -1 });
 
-    res.json(grades);
+    // Manually populate assignment details based on assignmentModel
+    const gradesWithDetails = await Promise.all(
+      grades.map(async (grade) => {
+        const gradeObj = grade.toObject();
+        
+        // Populate assignment details
+        if (gradeObj.assignment) {
+          // Check if it's a Topic or Assignment
+          const topic = await Topic.findById(gradeObj.assignment).populate({
+            path: "unit",
+            populate: { path: "course", select: "title" }
+          });
+          
+          if (topic) {
+            gradeObj.submission.assignment = {
+              _id: topic._id,
+              title: topic.title,
+              course: {
+                _id: topic.unit.course._id,
+                title: topic.unit.course.title
+              }
+            };
+          } else {
+            const assignment = await Assignment.findById(gradeObj.assignment).populate("course", "title");
+            if (assignment) {
+              gradeObj.submission.assignment = {
+                _id: assignment._id,
+                title: assignment.title,
+                course: assignment.course
+              };
+            }
+          }
+        }
+        
+        return gradeObj;
+      })
+    );
+
+    res.json(gradesWithDetails);
   } catch (err) {
     next(err);
   }

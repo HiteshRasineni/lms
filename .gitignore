@@ -126,6 +126,8 @@ postgres-data/
 # ML / AI Models
 # ===========================================
 models/
+# Exception: Allow backend/models/ directory (Mongoose models)
+!backend/models/
 *.model
 *.pkl
 *.joblib

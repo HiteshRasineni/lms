@@ -1,6 +1,12 @@
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { FileText, Calendar, BookOpen, Loader2, Plus } from "lucide-react";
@@ -48,12 +54,20 @@ const TeacherAssignments = () => {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2" data-testid="teacher-assignments-title">
+            <h1
+              className="text-3xl font-bold text-foreground mb-2"
+              data-testid="teacher-assignments-title"
+            >
               My Assignments
             </h1>
-            <p className="text-muted-foreground">View and manage all assignments across your courses.</p>
+            <p className="text-muted-foreground">
+              View and manage all assignments across your courses.
+            </p>
           </div>
-          <Button onClick={() => navigate("/teacher/courses")} data-testid="create-assignment-btn">
+          <Button
+            onClick={() => navigate("/courses")}
+            data-testid="create-assignment-btn"
+          >
             <Plus className="h-4 w-4 mr-2" />
             Create Assignment
           </Button>
@@ -65,7 +79,8 @@ const TeacherAssignments = () => {
               <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
               <h3 className="text-lg font-semibold mb-2">No Assignments</h3>
               <p className="text-muted-foreground">
-                You haven't created any assignments yet. Go to your courses to create one.
+                You haven't created any assignments yet. Go to your courses to
+                create one.
               </p>
             </CardContent>
           </Card>
@@ -74,8 +89,7 @@ const TeacherAssignments = () => {
             {assignments.map((assignment) => (
               <Card
                 key={assignment._id}
-                className="hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => navigate(`/teacher/courses/${assignment.course?._id}`)}
+                className="hover:shadow-lg transition-shadow"
                 data-testid={`assignment-card-${assignment._id}`}
               >
                 <CardHeader>
@@ -87,7 +101,9 @@ const TeacherAssignments = () => {
                           {assignment.course?.title || "Unknown Course"}
                         </Badge>
                       </div>
-                      <CardTitle className="text-lg">{assignment.title}</CardTitle>
+                      <CardTitle className="text-lg">
+                        {assignment.title}
+                      </CardTitle>
                       <CardDescription className="mt-2">
                         {assignment.description || "No description provided"}
                       </CardDescription>
@@ -99,13 +115,25 @@ const TeacherAssignments = () => {
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <div className="flex items-center gap-1">
                         <Calendar className="h-4 w-4" />
-                        <span>Due: {new Date(assignment.dueDate).toLocaleDateString()}</span>
+                        <span>
+                          Due:{" "}
+                          {new Date(assignment.dueDate).toLocaleDateString()}
+                        </span>
                       </div>
                       <div>
-                        <span className="font-medium">{assignment.maxPoints || 100}</span> points
+                        <span className="font-medium">
+                          {assignment.maxPoints || 100}
+                        </span>{" "}
+                        points
                       </div>
                     </div>
-                    <Button size="sm" variant="outline">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() =>
+                        navigate(`/teacher/courses/${assignment.course?._id}`)
+                      }
+                    >
                       View Details
                     </Button>
                   </div>
