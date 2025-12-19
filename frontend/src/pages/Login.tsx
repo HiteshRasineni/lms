@@ -13,6 +13,7 @@ import {
 import { GraduationCap, Eye, EyeOff } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import BubbleTabs from "@/components/BubbleTabs";
+import { GoogleSignInButton } from "@/components/GoogleSignInButton";
 import { useAuth } from "@/hooks/useAuth";
 
 const Login = () => {
@@ -151,13 +152,10 @@ const Login = () => {
               </div>
             </div>
 
-            <Button
-              onClick={handleGoogleLogin}
-              variant="outline"
-              className="w-full"
-            >
-              Sign in with Google
-            </Button>
+            <GoogleSignInButton
+              text="Sign in with Google"
+              onSuccess={() => handleGoogleLogin()}
+            />
 
             <div className="mt-6 text-center text-sm text-muted-foreground">
               Don&apos;t have an account?{" "}
