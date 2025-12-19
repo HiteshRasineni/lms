@@ -43,7 +43,7 @@ console.log("Hello, World!");`,
   python: `# Python
 print("Hello, World!")`,
   java: `// Java
-public class Solution {
+class Main {
     public static void main(String[] args) {
         System.out.println("Hello, World!");
     }
@@ -81,12 +81,9 @@ export const MonacoCodeEditor = ({
   };
 
   const handleLanguageChange = (newLanguage: string) => {
+    // Let the parent component decide how to handle language changes
+    // (including which template to load for the selected problem).
     onLanguageChange(newLanguage);
-    if (!value || value.trim() === "") {
-      onChange(
-        defaultTemplates[newLanguage as keyof typeof defaultTemplates] || ""
-      );
-    }
   };
 
   const copyToClipboard = async () => {

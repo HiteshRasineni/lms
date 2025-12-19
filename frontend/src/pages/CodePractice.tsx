@@ -24,7 +24,9 @@ import {
   Loader2,
   AlertTriangle,
 } from "lucide-react";
-import { MonacoCodeEditor } from "@/components/code/MonacoCodeEditor";
+import {
+  MonacoCodeEditor,
+} from "@/components/code/MonacoCodeEditor";
 import { ProblemList } from "@/components/code/ProblemList";
 import { CodeProgress } from "@/components/code/CodeProgress";
 import { useAuth } from "@/hooks/useAuth";
@@ -309,11 +311,100 @@ const CodePractice = () => {
     }
   };
 
+  const getDefaultTemplateForLanguage = (lang: string) => {
+    switch (lang) {
+      case "javascript":
+        return `// JavaScript
+console.log("Hello, World!");`;
+      case "python":
+        return `# Python
+print("Hello, World!")`;
+      case "java":
+        return `// Java
+class Main {
+    public static void main(String[] args) {
+        System.out.println("Hello, World!");
+    }
+}`;
+      case "cpp":
+        return `// C++
+#include <iostream>
+using namespace std;
+
+int main() {
+    cout << "Hello, World!" << endl;
+    return 0;
+}`;
+      case "c":
+        return `// C
+#include <stdio.h>
+
+int main() {
+    printf("Hello, World!\\n");
+    return 0;
+}`;
+      default:
+        return "";
+    }
+  };
+
+  const normalizeJavaTemplate = (code: string | undefined | null) => {
+    const fallback = getDefaultTemplateForLanguage("java");
+    if (!code) return fallback;
+
+    let normalized = code;
+
+    // If the template uses class Solution, rename it to Main
+    if (/class\s+Solution\b/.test(normalized)) {
+      normalized = normalized.replace(/class\s+Solution\b/g, "class Main");
+    }
+
+    // Ensure there is a Main class with a main method
+    if (!/class\s+Main\b/.test(normalized)) {
+      return fallback;
+    }
+
+    if (!/public\s+static\s+void\s+main\s*\(\s*String\s*\[\]\s*args\s*\)/.test(normalized)) {
+      // If there's a Main class but no main method, append a simple main
+      normalized += `
+
+    public static void main(String[] args) {
+        System.out.println("Hello, World!");
+    }
+}`;
+    }
+
+    return normalized;
+  };
+
+  const getTemplateForLanguage = (lang: string) => {
+    if (selectedProblem?.templates && selectedProblem.templates[lang]) {
+      if (lang === "java") {
+        return normalizeJavaTemplate(selectedProblem.templates[lang]);
+      }
+      return selectedProblem.templates[lang];
+    }
+
+    if (lang === "java") {
+      return normalizeJavaTemplate(null);
+    }
+
+    return getDefaultTemplateForLanguage(lang);
+  };
+
   const handleProblemSelect = (problem: any) => {
     setSelectedProblem(problem);
-    // Load template for the selected problem
-    if (problem.templates && problem.templates[language]) {
-      setUserCode(problem.templates[language]);
+    const template = getTemplateForLanguage(language);
+    if (template) {
+      setUserCode(template);
+    }
+  };
+
+  const handleLanguageChange = (newLanguage: string) => {
+    setLanguage(newLanguage);
+    const template = getTemplateForLanguage(newLanguage);
+    if (template) {
+      setUserCode(template);
     }
   };
 
@@ -519,7 +610,7 @@ const CodePractice = () => {
                     value={userCode}
                     onChange={setUserCode}
                     language={language}
-                    onLanguageChange={setLanguage}
+                    onLanguageChange={handleLanguageChange}
                     onRun={runCode}
                     isRunning={isRunning}
                   />

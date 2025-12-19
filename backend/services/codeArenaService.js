@@ -190,6 +190,11 @@ class CodeArenaService {
                 'X-RapidAPI-Key': CODEARENA_API_KEY,
                 'X-RapidAPI-Host': CODEARENA_API_HOST,
             },
+            // Ensure CodeArena/Judge0 returns base64 encoded fields so we can decode them reliably
+            params: {
+                base64_encoded: true,
+                fields: '*',
+            },
         };
 
         if (data) {
