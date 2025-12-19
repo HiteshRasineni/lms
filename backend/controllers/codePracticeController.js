@@ -2,6 +2,7 @@ import CodeProblem from "../models/CodeProblem.js";
 import CodeSubmission from "../models/CodeSubmission.js";
 import CodeProgress from "../models/CodeProgress.js";
 import User from "../models/User.js";
+import codeExecutionService from "../services/codeExecutionService.js";
 
 // Get all problems with filters
 export const getProblems = async (req, res, next) => {
@@ -115,8 +116,13 @@ export const submitCode = async (req, res, next) => {
             totalTestCases: problem.testCases.length
         });
 
-        // Mock code execution (replace with actual code execution service)
-        const executionResult = await executeCode(code, language, problem.testCases);
+        // Execute code against test cases using CodeArena
+        const executionResult = await codeExecutionService.executeCodeWithTestCases(
+            code,
+            language,
+            problem.testCases,
+            req.user._id
+        );
 
         // Update submission with results
         submission.status = executionResult.status;
@@ -285,34 +291,6 @@ export const getLeaderboard = async (req, res, next) => {
 };
 
 // Helper functions
-const executeCode = async (code, language, testCases) => {
-    // Mock implementation - replace with actual code execution service
-    // This would typically call a sandboxed code execution service
-
-    const mockResults = testCases.map((testCase, index) => ({
-        testCaseId: testCase._id,
-        passed: Math.random() > 0.3, // 70% pass rate for demo
-        input: testCase.input,
-        expectedOutput: testCase.expectedOutput,
-        actualOutput: testCase.expectedOutput, // Mock correct output
-        executionTime: Math.floor(Math.random() * 100) + 10, // 10-110ms
-        memoryUsed: Math.floor(Math.random() * 50) + 10, // 10-60MB
-        error: null
-    }));
-
-    const passedTestCases = mockResults.filter(r => r.passed).length;
-    const status = passedTestCases === testCases.length ? "Accepted" : "Wrong Answer";
-
-    return {
-        status,
-        testResults: mockResults,
-        passedTestCases,
-        executionTime: mockResults.reduce((sum, r) => sum + r.executionTime, 0) / mockResults.length,
-        memoryUsed: mockResults.reduce((sum, r) => sum + r.memoryUsed, 0) / mockResults.length,
-        error: null
-    };
-};
-
 const calculateXPReward = (difficulty) => {
     const xpMap = {
         "Easy": 10,

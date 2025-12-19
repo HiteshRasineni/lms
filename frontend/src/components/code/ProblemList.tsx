@@ -63,7 +63,13 @@ export const ProblemList = ({
       if (statusFilter !== "all") params.status = statusFilter;
 
       const response = await codePracticeApi.getProblems(params);
-      setProblems(response.data.problems || []);
+      const problems = response.data.problems || [];
+      // Ensure each problem has an id field (using _id from MongoDB)
+      const normalizedProblems = problems.map((p: any) => ({
+        ...p,
+        id: p._id || p.id,
+      }));
+      setProblems(normalizedProblems);
     } catch (error: any) {
       console.error("Failed to load problems:", error);
       toast({
@@ -209,4 +215,3 @@ export const ProblemList = ({
     </div>
   );
 };
-

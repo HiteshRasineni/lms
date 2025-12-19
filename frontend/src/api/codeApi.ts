@@ -188,11 +188,11 @@ class CodeApi {
     }
 
     /**
-     * Submit code for a problem (with test cases) - Legacy method
+     * Submit code for a problem (with test cases)
      */
     async submitCodeForProblem(request: { problemId: string; code: string; language: string }): Promise<SubmissionResult> {
         try {
-            const response = await api.post('/code-execution/submit', request);
+            const response = await api.post('/code-practice/submit', request);
             return response.data;
         } catch (error: any) {
             throw new Error(error.response?.data?.message || 'Failed to submit code');

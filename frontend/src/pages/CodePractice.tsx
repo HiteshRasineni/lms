@@ -260,7 +260,7 @@ const CodePractice = () => {
 
     try {
       const result = await codeApi.submitCodeForProblem({
-        problemId: selectedProblem.id,
+        problemId: selectedProblem._id || selectedProblem.id,
         code: userCode,
         language: language,
       });
@@ -596,4 +596,3 @@ const CodePractice = () => {
 };
 
 export default CodePractice;
-
