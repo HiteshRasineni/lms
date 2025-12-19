@@ -70,7 +70,7 @@ const CodePractice = () => {
 
       setStats({
         problemsSolved: progress.totalProblemsSolved || 0,
-        totalProblems: 50, // This would come from a separate API call
+        totalProblems: progress.totalProblemsCount || 0,
         streak: progress.currentStreak || 0,
         totalTime: progress.totalTimeSpent || 0,
       });
@@ -278,20 +278,31 @@ const CodePractice = () => {
           passedTestCases,
           totalTestCases,
           xpEarned,
+          executionTime,
+          memoryUsed,
         } = result;
 
         setTestResults(results || []);
-        setOutput(
-          `Status: ${status}\nPassed: ${passedTestCases}/${totalTestCases} test cases`
-        );
+
+        let outputText = `Status: ${status}\nPassed: ${passedTestCases}/${totalTestCases} test cases`;
+        if (executionTime)
+          outputText += `\nAvg Execution Time: ${executionTime.toFixed(2)}ms`;
+        if (memoryUsed)
+          outputText += `\nAvg Memory Used: ${memoryUsed.toFixed(2)}MB`;
+
+        setOutput(outputText);
 
         if (status === "Accepted") {
           toast({
             title: "Accepted! 🎉",
             description: `You earned ${xpEarned} XP!`,
           });
-          // Reload stats to reflect new progress
-          loadCodeStats();
+
+          // Real-time progress update: Reload stats immediately
+          await loadCodeStats();
+
+          // Mark problem as solved in the current view
+          setSelectedProblem((prev: any) => ({ ...prev, solved: true }));
         } else {
           toast({
             title: status,
@@ -403,11 +414,25 @@ int main() {
     return getDefaultTemplateForLanguage(lang);
   };
 
-  const handleProblemSelect = (problem: any) => {
-    setSelectedProblem(problem);
-    const template = getTemplateForLanguage(language);
-    if (template) {
-      setUserCode(template);
+  const handleProblemSelect = async (problem: any) => {
+    try {
+      // Fetch full problem details including sample test cases
+      const response = await codePracticeApi.getProblem(problem.id);
+      const fullProblem = response.data;
+      setSelectedProblem(fullProblem);
+
+      const template = getTemplateForLanguage(language);
+      if (template) {
+        setUserCode(template);
+      }
+    } catch (error) {
+      console.error("Failed to load problem details:", error);
+      // Fallback to basic problem data
+      setSelectedProblem(problem);
+      const template = getTemplateForLanguage(language);
+      if (template) {
+        setUserCode(template);
+      }
     }
   };
 
@@ -582,9 +607,55 @@ int main() {
                         <div className="bg-muted/50 p-3 rounded-md text-sm font-mono">
                           <div>Input: {selectedProblem.example.input}</div>
                           <div>Output: {selectedProblem.example.output}</div>
+                          {selectedProblem.example.explanation && (
+                            <div className="mt-2 text-xs text-muted-foreground">
+                              {selectedProblem.example.explanation}
+                            </div>
+                          )}
                         </div>
                       </div>
                     )}
+
+                    {selectedProblem.sampleTestCases &&
+                      selectedProblem.sampleTestCases.length > 0 && (
+                        <div>
+                          <h4 className="font-medium mb-2">
+                            Sample Test Cases
+                          </h4>
+                          <div className="space-y-2">
+                            {selectedProblem.sampleTestCases.map(
+                              (testCase: any, index: number) => (
+                                <div
+                                  key={index}
+                                  className="bg-muted/50 p-3 rounded-md text-sm"
+                                >
+                                  <div className="font-medium text-xs text-muted-foreground mb-1">
+                                    Test Case {index + 1}
+                                  </div>
+                                  <div className="font-mono text-xs space-y-1">
+                                    <div>
+                                      <span className="text-muted-foreground">
+                                        Input:
+                                      </span>{" "}
+                                      {testCase.input}
+                                    </div>
+                                    <div>
+                                      <span className="text-muted-foreground">
+                                        Expected Output:
+                                      </span>{" "}
+                                      {testCase.expectedOutput}
+                                    </div>
+                                  </div>
+                                </div>
+                              )
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Note: Additional hidden test cases will be used for
+                            final evaluation
+                          </p>
+                        </div>
+                      )}
 
                     {selectedProblem.hints &&
                       selectedProblem.hints.length > 0 && (
@@ -745,21 +816,88 @@ int main() {
                   <Card className="glass-card border-white/10">
                     <CardHeader>
                       <CardTitle>Test Results</CardTitle>
+                      <CardDescription>
+                        {testResults.filter((r) => r.passed).length}/
+                        {testResults.length} tests passed
+                      </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <div className="space-y-2">
+                      <div className="space-y-3">
                         {testResults.map((result, index) => (
                           <div
                             key={result.testCaseId || index}
-                            className="flex items-center justify-between p-2 rounded-md bg-muted/30"
+                            className={`p-3 rounded-lg border ${
+                              result.passed
+                                ? "bg-green-500/10 border-green-500/30"
+                                : "bg-red-500/10 border-red-500/30"
+                            }`}
                           >
-                            <span className="text-sm">
-                              Test Case {index + 1}
-                            </span>
-                            {result.passed ? (
-                              <CheckCircle className="h-4 w-4 text-success" />
-                            ) : (
-                              <XCircle className="h-4 w-4 text-destructive" />
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-sm font-medium">
+                                Test Case {index + 1}
+                              </span>
+                              <div className="flex items-center gap-2">
+                                {result.executionTime && (
+                                  <span className="text-xs text-muted-foreground">
+                                    {result.executionTime.toFixed(2)}ms
+                                  </span>
+                                )}
+                                {result.passed ? (
+                                  <CheckCircle className="h-4 w-4 text-green-500" />
+                                ) : (
+                                  <XCircle className="h-4 w-4 text-red-500" />
+                                )}
+                              </div>
+                            </div>
+
+                            {result.input && (
+                              <div className="mb-2">
+                                <div className="text-xs font-medium text-muted-foreground mb-1">
+                                  Input:
+                                </div>
+                                <div className="text-xs bg-muted/50 p-2 rounded font-mono">
+                                  {result.input}
+                                </div>
+                              </div>
+                            )}
+
+                            {!result.passed && (
+                              <>
+                                <div className="mb-2">
+                                  <div className="text-xs font-medium text-muted-foreground mb-1">
+                                    Expected Output:
+                                  </div>
+                                  <div className="text-xs bg-muted/50 p-2 rounded font-mono">
+                                    {result.expectedOutput || "N/A"}
+                                  </div>
+                                </div>
+
+                                <div className="mb-2">
+                                  <div className="text-xs font-medium text-muted-foreground mb-1">
+                                    Your Output:
+                                  </div>
+                                  <div className="text-xs bg-muted/50 p-2 rounded font-mono">
+                                    {result.actualOutput || "No output"}
+                                  </div>
+                                </div>
+
+                                {result.error && (
+                                  <div>
+                                    <div className="text-xs font-medium text-red-400 mb-1">
+                                      Error:
+                                    </div>
+                                    <div className="text-xs bg-red-500/10 p-2 rounded font-mono text-red-400">
+                                      {result.error}
+                                    </div>
+                                  </div>
+                                )}
+                              </>
+                            )}
+
+                            {result.passed && result.actualOutput && (
+                              <div className="text-xs text-green-400">
+                                ✓ Output matches expected result
+                              </div>
                             )}
                           </div>
                         ))}
@@ -772,7 +910,7 @@ int main() {
           </TabsContent>
 
           <TabsContent value="progress" className="space-y-4">
-            <CodeProgress stats={stats} />
+            <CodeProgress stats={stats} key={stats.problemsSolved} />
           </TabsContent>
         </Tabs>
       </div>

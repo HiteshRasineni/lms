@@ -84,7 +84,23 @@ export const getProblemById = async (req, res, next) => {
             solved = userProgress?.solvedProblems.includes(problem._id) || false;
         }
 
-        res.json({ ...problem.toObject(), solved });
+        // Filter test cases to only show sample test cases (non-hidden ones)
+        const problemObj = problem.toObject();
+        problemObj.sampleTestCases = problemObj.testCases
+            .filter(tc => !tc.isHidden)
+            .map(tc => ({
+                input: tc.input,
+                expectedOutput: tc.expectedOutput
+            }));
+        
+        // Remove expectedOutput from testCases for security (keep only input for display)
+        problemObj.testCases = problemObj.testCases.map(tc => ({
+            _id: tc._id,
+            input: tc.input,
+            isHidden: tc.isHidden
+        }));
+
+        res.json({ ...problemObj, solved });
     } catch (err) {
         next(err);
     }
@@ -158,9 +174,13 @@ export const submitCode = async (req, res, next) => {
             testResults: submission.testResults.map(result => ({
                 testCaseId: result.testCaseId,
                 passed: result.passed,
+                input: result.input,
+                expectedOutput: result.expectedOutput,
+                actualOutput: result.actualOutput,
                 executionTime: result.executionTime,
                 memoryUsed: result.memoryUsed,
-                error: result.error
+                error: result.error,
+                status: result.status
             })),
             passedTestCases: submission.passedTestCases,
             totalTestCases: submission.totalTestCases,
@@ -192,6 +212,9 @@ export const getUserProgress = async (req, res, next) => {
             });
         }
 
+        // Get total problems count
+        const totalProblemsCount = await CodeProblem.countDocuments({ isActive: true });
+
         // Get total problems count for each category and difficulty
         const categories = await CodeProblem.distinct("category", { isActive: true });
         const categoryStats = await Promise.all(
@@ -222,6 +245,7 @@ export const getUserProgress = async (req, res, next) => {
 
         res.json({
             ...progress.toObject(),
+            totalProblemsCount,
             categoryStats,
             difficultyStats
         });

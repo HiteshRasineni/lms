@@ -15,9 +15,9 @@ const sampleProblems = [
             explanation: "Because nums[0] + nums[1] == 9, we return [0, 1]."
         },
         testCases: [
-            { input: "[2,7,11,15]\n9", expectedOutput: "[0,1]" },
-            { input: "[3,2,4]\n6", expectedOutput: "[1,2]" },
-            { input: "[3,3]\n6", expectedOutput: "[0,1]" }
+            { input: "[2,7,11,15]\n9", expectedOutput: "[0,1]", isHidden: false },
+            { input: "[3,2,4]\n6", expectedOutput: "[1,2]", isHidden: false },
+            { input: "[3,3]\n6", expectedOutput: "[0,1]", isHidden: true }
         ],
         templates: {
             javascript: `/**
@@ -70,8 +70,8 @@ public:
             explanation: "Reverse the array of characters in-place."
         },
         testCases: [
-            { input: '["h","e","l","l","o"]', expectedOutput: '["o","l","l","e","h"]' },
-            { input: '["H","a","n","n","a","h"]', expectedOutput: '["h","a","n","n","a","H"]' }
+            { input: '["h","e","l","l","o"]', expectedOutput: '["o","l","l","e","h"]', isHidden: false },
+            { input: '["H","a","n","n","a","h"]', expectedOutput: '["h","a","n","n","a","H"]', isHidden: true }
         ],
         templates: {
             javascript: `/**
@@ -122,11 +122,11 @@ public:
             explanation: "The string contains valid parentheses."
         },
         testCases: [
-            { input: '"()"', expectedOutput: 'true' },
-            { input: '"()[]{}"', expectedOutput: 'true' },
-            { input: '"(]"', expectedOutput: 'false' },
-            { input: '"([)]"', expectedOutput: 'false' },
-            { input: '"{[]}"', expectedOutput: 'true' }
+            { input: '"()"', expectedOutput: 'true', isHidden: false },
+            { input: '"()[]{}"', expectedOutput: 'true', isHidden: false },
+            { input: '"(]"', expectedOutput: 'false', isHidden: false },
+            { input: '"([)]"', expectedOutput: 'false', isHidden: true },
+            { input: '"{[]}"', expectedOutput: 'true', isHidden: true }
         ],
         templates: {
             javascript: `/**
@@ -177,10 +177,10 @@ public:
             explanation: 'The answer is "abc", with the length of 3.'
         },
         testCases: [
-            { input: '"abcabcbb"', expectedOutput: '3' },
-            { input: '"bbbbb"', expectedOutput: '1' },
-            { input: '"pwwkew"', expectedOutput: '3' },
-            { input: '""', expectedOutput: '0' }
+            { input: '"abcabcbb"', expectedOutput: '3', isHidden: false },
+            { input: '"bbbbb"', expectedOutput: '1', isHidden: false },
+            { input: '"pwwkew"', expectedOutput: '3', isHidden: true },
+            { input: '""', expectedOutput: '0', isHidden: true }
         ],
         templates: {
             javascript: `/**
@@ -231,9 +231,9 @@ public:
             explanation: "Merge the two sorted linked lists."
         },
         testCases: [
-            { input: '[1,2,4]\n[1,3,4]', expectedOutput: '[1,1,2,3,4,4]' },
-            { input: '[]\n[]', expectedOutput: '[]' },
-            { input: '[]\n[0]', expectedOutput: '[0]' }
+            { input: '[1,2,4]\n[1,3,4]', expectedOutput: '[1,1,2,3,4,4]', isHidden: false },
+            { input: '[]\n[]', expectedOutput: '[]', isHidden: false },
+            { input: '[]\n[0]', expectedOutput: '[0]', isHidden: true }
         ],
         templates: {
             javascript: `/**
@@ -318,9 +318,9 @@ public:
             explanation: '[4,-1,2,1] has the largest sum = 6.'
         },
         testCases: [
-            { input: '[-2,1,-3,4,-1,2,1,-5,4]', expectedOutput: '6' },
-            { input: '[1]', expectedOutput: '1' },
-            { input: '[5,4,-1,7,8]', expectedOutput: '23' }
+            { input: '[-2,1,-3,4,-1,2,1,-5,4]', expectedOutput: '6', isHidden: false },
+            { input: '[1]', expectedOutput: '1', isHidden: false },
+            { input: '[5,4,-1,7,8]', expectedOutput: '23', isHidden: true }
         ],
         templates: {
             javascript: `/**
