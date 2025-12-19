@@ -68,7 +68,7 @@ const StudentDashboard = () => {
 
       // Filter upcoming assignments (not submitted yet)
       const upcoming = assignmentsData
-        .filter((a: any) => new Date(a.dueDate) > new Date())
+        .filter((a: any) => new Date(a.dueDate) > new Date() && !a.submitted)
         .sort(
           (a: any, b: any) =>
             new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
@@ -93,7 +93,7 @@ const StudentDashboard = () => {
         const dueDate = new Date(a.dueDate);
         const weekFromNow = new Date();
         weekFromNow.setDate(weekFromNow.getDate() + 7);
-        return dueDate >= new Date() && dueDate <= weekFromNow;
+        return dueDate >= new Date() && dueDate <= weekFromNow && !a.submitted;
       }).length;
 
       setStats({

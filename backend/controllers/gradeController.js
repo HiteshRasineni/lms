@@ -225,14 +225,9 @@ export const getPendingGrades = async (req, res, next) => {
     // Combine all assignment IDs
     const allAssignmentIds = [...assignmentIds, ...topicAssignmentIds];
     
-    // Get all submissions
+    // Get all submissions without populate (we'll manually populate based on assignmentModel)
     const submissions = await Submission.find({ assignment: { $in: allAssignmentIds } })
-      .populate("student", "name email")
-      .populate("assignment", "title course")
-      .populate({
-        path: "assignment",
-        populate: { path: "course", select: "title" }
-      });
+      .populate("student", "name email");
     
     const submissionIds = submissions.map(s => s._id);
     
@@ -244,7 +239,45 @@ export const getPendingGrades = async (req, res, next) => {
     const pendingSubmissions = submissions
       .filter(s => !gradedSubmissionIds.includes(s._id.toString()));
 
-    res.json(pendingSubmissions);
+    // Manually populate assignment details based on assignmentModel
+    const populatedSubmissions = await Promise.all(
+      pendingSubmissions.map(async (submission) => {
+        const submissionObj = submission.toObject();
+        
+        if (submission.assignmentModel === "Topic") {
+          // It's a Topic-based assignment
+          const topic = await Topic.findById(submission.assignment).populate({
+            path: "unit",
+            populate: { path: "course", select: "title" }
+          });
+          
+          if (topic) {
+            submissionObj.assignment = {
+              _id: topic._id,
+              title: topic.title,
+              course: {
+                _id: topic.unit.course._id,
+                title: topic.unit.course.title
+              }
+            };
+          }
+        } else {
+          // Regular Assignment
+          const assignment = await Assignment.findById(submission.assignment).populate("course", "title");
+          if (assignment) {
+            submissionObj.assignment = {
+              _id: assignment._id,
+              title: assignment.title,
+              course: assignment.course
+            };
+          }
+        }
+        
+        return submissionObj;
+      })
+    );
+
+    res.json(populatedSubmissions);
   } catch (err) {
     next(err);
   }

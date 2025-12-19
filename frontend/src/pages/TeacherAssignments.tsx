@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Calendar, BookOpen, Loader2, Plus } from "lucide-react";
+import { FileText, Calendar, BookOpen, Loader2 } from "lucide-react";
 import { getAssignments } from "@/lib/apiService";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -52,25 +52,16 @@ const TeacherAssignments = () => {
   return (
     <DashboardLayout userRole="teacher">
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1
-              className="text-3xl font-bold text-foreground mb-2"
-              data-testid="teacher-assignments-title"
-            >
-              My Assignments
-            </h1>
-            <p className="text-muted-foreground">
-              View and manage all assignments across your courses.
-            </p>
-          </div>
-          <Button
-            onClick={() => navigate("/courses")}
-            data-testid="create-assignment-btn"
+        <div>
+          <h1
+            className="text-3xl font-bold text-foreground mb-2"
+            data-testid="teacher-assignments-title"
           >
-            <Plus className="h-4 w-4 mr-2" />
-            Create Assignment
-          </Button>
+            My Assignments
+          </h1>
+          <p className="text-muted-foreground">
+            View and manage all assignments across your courses.
+          </p>
         </div>
 
         {assignments.length === 0 ? (
