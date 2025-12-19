@@ -24,9 +24,7 @@ import {
   Loader2,
   AlertTriangle,
 } from "lucide-react";
-import {
-  MonacoCodeEditor,
-} from "@/components/code/MonacoCodeEditor";
+import { MonacoCodeEditor } from "@/components/code/MonacoCodeEditor";
 import { ProblemList } from "@/components/code/ProblemList";
 import { CodeProgress } from "@/components/code/CodeProgress";
 import { useAuth } from "@/hooks/useAuth";
@@ -224,6 +222,9 @@ const CodePractice = () => {
       if (result.executionStats) {
         setExecutionStats(result.executionStats);
       }
+
+      // Reload execution stats to ensure accurate count
+      await loadExecutionStats();
     } catch (error: any) {
       const errorMsg = error.message || "Failed to execute code";
       setOutput(`Error: ${errorMsg}`);
@@ -232,6 +233,9 @@ const CodePractice = () => {
         description: errorMsg,
         variant: "destructive",
       });
+
+      // Reload execution stats even on error to ensure accurate count
+      await loadExecutionStats();
     } finally {
       setIsRunning(false);
     }
@@ -298,6 +302,9 @@ const CodePractice = () => {
       } else {
         throw new Error(result.error || "Submission failed");
       }
+
+      // Reload execution stats after submission to reflect updated counts
+      await loadExecutionStats();
     } catch (error: any) {
       const errorMsg = error.message || "Failed to submit code";
       setOutput(`Error: ${errorMsg}`);
@@ -364,7 +371,11 @@ int main() {
       return fallback;
     }
 
-    if (!/public\s+static\s+void\s+main\s*\(\s*String\s*\[\]\s*args\s*\)/.test(normalized)) {
+    if (
+      !/public\s+static\s+void\s+main\s*\(\s*String\s*\[\]\s*args\s*\)/.test(
+        normalized
+      )
+    ) {
       // If there's a Main class but no main method, append a simple main
       normalized += `
 
@@ -575,7 +586,21 @@ int main() {
                       </div>
                     )}
 
-                    <div className="flex gap-2">
+                    {selectedProblem.hints &&
+                      selectedProblem.hints.length > 0 && (
+                        <div>
+                          <h4 className="font-medium mb-2">Hints</h4>
+                          <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                            {selectedProblem.hints.map(
+                              (hint: string, index: number) => (
+                                <li key={index}>{hint}</li>
+                              )
+                            )}
+                          </ul>
+                        </div>
+                      )}
+
+                    <div className="flex gap-2 pt-2">
                       <Button
                         onClick={submitSolution}
                         disabled={isRunning}
@@ -588,7 +613,20 @@ int main() {
                         )}
                         {isRunning ? "Submitting..." : "Submit Solution"}
                       </Button>
+                      <Button
+                        onClick={runCode}
+                        disabled={isRunning || !canExecuteCode()}
+                        variant="outline"
+                        className="gap-2"
+                      >
+                        <Play className="h-4 w-4" />
+                        {isRunning ? "Running..." : "Test Run"}
+                      </Button>
                     </div>
+                    <p className="text-xs text-muted-foreground">
+                      💡 Tip: Use "Test Run" to check your code, then "Submit
+                      Solution" to run against all test cases
+                    </p>
                   </CardContent>
                 </Card>
               )}
@@ -597,43 +635,99 @@ int main() {
 
           <TabsContent value="editor" className="space-y-4">
             <div className="grid gap-6 lg:grid-cols-2">
-              <Card className="glass-card border-white/10">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Code className="h-5 w-5" />
-                    Code Editor
-                  </CardTitle>
-                  <CardDescription>Write and test your code</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <MonacoCodeEditor
-                    value={userCode}
-                    onChange={setUserCode}
-                    language={language}
-                    onLanguageChange={handleLanguageChange}
-                    onRun={runCode}
-                    isRunning={isRunning}
-                  />
-
-                  {/* Run Code Button with Status */}
-                  <div className="mt-4 flex items-center justify-between">
-                    <Button
-                      onClick={runCode}
-                      disabled={isRunning || !canExecuteCode()}
-                      className="gap-2"
-                    >
-                      <Play className="h-4 w-4" />
-                      {isRunning ? "Running..." : "Run Code"}
-                    </Button>
-
-                    {!canExecuteCode() && (
-                      <p className="text-sm text-muted-foreground">
-                        {getCooldownMessage()}
+              <div className="space-y-4">
+                {/* Selected Problem Info */}
+                {selectedProblem && (
+                  <Card className="glass-card border-white/10">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-lg">
+                          {selectedProblem.title}
+                        </CardTitle>
+                        <Badge
+                          variant={
+                            selectedProblem.difficulty === "Easy"
+                              ? "default"
+                              : selectedProblem.difficulty === "Medium"
+                              ? "secondary"
+                              : "destructive"
+                          }
+                        >
+                          {selectedProblem.difficulty}
+                        </Badge>
+                      </div>
+                      <CardDescription className="text-xs">
+                        {selectedProblem.category}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {selectedProblem.description}
                       </p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+                    </CardContent>
+                  </Card>
+                )}
+
+                <Card className="glass-card border-white/10">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Code className="h-5 w-5" />
+                      Code Editor
+                    </CardTitle>
+                    <CardDescription>
+                      {selectedProblem
+                        ? "Write your solution and submit"
+                        : "Select a problem from the Practice tab first"}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <MonacoCodeEditor
+                      value={userCode}
+                      onChange={setUserCode}
+                      language={language}
+                      onLanguageChange={handleLanguageChange}
+                      onRun={runCode}
+                      isRunning={isRunning}
+                    />
+
+                    {/* Action Buttons */}
+                    <div className="mt-4 flex items-center justify-between flex-wrap gap-2">
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={runCode}
+                          disabled={isRunning || !canExecuteCode()}
+                          variant="outline"
+                          className="gap-2"
+                        >
+                          <Play className="h-4 w-4" />
+                          {isRunning ? "Running..." : "Run Code"}
+                        </Button>
+
+                        {selectedProblem && (
+                          <Button
+                            onClick={submitSolution}
+                            disabled={isRunning}
+                            className="gap-2"
+                          >
+                            {isRunning ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Trophy className="h-4 w-4" />
+                            )}
+                            {isRunning ? "Submitting..." : "Submit Solution"}
+                          </Button>
+                        )}
+                      </div>
+
+                      {!canExecuteCode() && (
+                        <p className="text-sm text-muted-foreground">
+                          {getCooldownMessage()}
+                        </p>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
 
               <div className="space-y-4">
                 <Card className="glass-card border-white/10">
